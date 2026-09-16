@@ -38,3 +38,11 @@ google-services.json
 # Engine source checkout and built bundles, neither belongs in the repo
 engine-build/
 releases/
+
+# A clone of the open Wukong game database; it has its own .git, and an entry for it
+# without a .gitmodules line makes every checkout fail with exit code 128.
+ml/data/wukong/
+
+# Play signs with its own key; the upload certificate is a public cert, but there is no
+# reason to carry it in a public repository.
+play_store_assets/upload_certificate.pem
