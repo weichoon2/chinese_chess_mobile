@@ -24,16 +24,16 @@ A feature-rich Chinese Chess (Xiangqi) game for Android with a strong AI engine,
 ## Features / 功能
 
 ### Game Modes / 游戏模式
-- **Player vs AI / 人机对弈** — 6 difficulty levels powered by Pikafish engine (3000+ Elo) / 6 个难度级别，Pikafish 引擎驱动（3000+ Elo）
+- **Player vs AI / 人机对弈** — 6 difficulty levels powered by the Pikafish engine / 6 个难度级别，Pikafish 引擎驱动
 - **Player vs Player / 双人对弈** — Same-device local multiplayer / 同设备本地双人
 - **AI vs AI / AI 对弈** — Watch the engine play itself / 观看 AI 自我对弈
 - **Endgame Puzzles / 残局练习** — 8 classic positions / 8 个经典残局 (重炮杀, 铁门栓, 天地炮, 马后炮, etc.)
 
 ### AI Engine / AI 引擎 — Pikafish
 
-Powered by [Pikafish](https://github.com/official-pikafish/Pikafish), one of the strongest xiangqi engines in the world (3000+ Elo). Pikafish is a Stockfish fork rewritten for xiangqi rules, using NNUE (efficiently updatable neural network) evaluation.
+Powered by [Pikafish](https://github.com/official-pikafish/Pikafish), one of the strongest xiangqi engines in the world. Pikafish is a Stockfish fork rewritten for xiangqi rules, using NNUE (efficiently updatable neural network) evaluation.
 
-由 [Pikafish](https://github.com/official-pikafish/Pikafish) 驱动，目前世界最强的象棋引擎之一（3000+ Elo）。Pikafish 基于 Stockfish 改写，使用 NNUE 神经网络评估。
+由 [Pikafish](https://github.com/official-pikafish/Pikafish) 驱动，目前世界最强的象棋引擎之一。Pikafish 基于 Stockfish 改写，使用 NNUE 神经网络评估。
 
 The engine runs as a native ARM64 binary on device, communicating via UCI protocol.
 
@@ -41,14 +41,18 @@ The engine runs as a native ARM64 binary on device, communicating via UCI protoc
 
 #### Difficulty Levels / 难度级别
 
-| Level / 级别 | Pikafish Depth / 搜索深度 | Estimated Elo |
-|-------|-------------|------------|
-| Beginner / 初级 | 3 | ~1600 |
-| Intermediate / 中级 | 6 | ~2000 |
-| Advanced / 高级 | 10 | ~2400 |
-| Professional / 专业 | 15 | ~2600 |
-| Master / 大师 | 20 | ~2800 |
-| Grandmaster / 棋圣 | Unlimited / 无限 | 3000+ |
+| Level / 级别 | Engine setting / 引擎设置 |
+|-------|-------------|
+| Beginner / 初级 | depth 3 / 3 层 |
+| Intermediate / 中级 | depth 6 / 6 层 |
+| Advanced / 高级 | depth 10 / 10 层 |
+| Professional / 专业 (default / 默认) | depth 15 / 15 层 |
+| Master / 大师 | depth 20 / 20 层 |
+| Grandmaster / 棋圣 | 10 s per move / 每步 10 秒 |
+
+A level changes only how far the engine searches: there is no skill limiter and no deliberate randomness, so even Beginner plays the engine's own best move at that depth. No Elo has been measured for these levels; the rating ladder in the app scores games against its own nominal AI ratings (800 to 2300).
+
+难度只改变引擎往下算多深，没有限制棋力的选项，也没有故意走随机着，所以初级走的也是引擎在那个深度上认为最好的一步。各档没有实测过等级分；应用里的积分天梯按它自己设定的 AI 分值（800 到 2300）计分。
 
 ### User Interface / 用户界面
 

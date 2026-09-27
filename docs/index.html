@@ -255,8 +255,8 @@
     <div class="features">
         <div class="feature-card">
             <div class="icon">&#x265E;</div>
-            <h3>Strong AI Engine</h3>
-            <p>Alpha-beta search with null move pruning, late move reductions, Zobrist hashing, killer & history heuristics. 5 difficulty levels up to Master (depth 7).</p>
+            <h3>Pikafish Engine</h3>
+            <p>Pikafish, a leading xiangqi engine with NNUE evaluation, runs on the phone itself. Six levels, from depth 3 at Beginner to depth 20 at Master; Grandmaster thinks ten seconds a move.</p>
         </div>
         <div class="feature-card">
             <div class="icon">&#x1F3AF;</div>
@@ -291,12 +291,13 @@
 <section>
     <h2>AI Difficulty Levels</h2>
     <table>
-        <tr><th>Level</th><th>Search Depth</th><th>Time Limit</th><th>Strength</th></tr>
-        <tr><td>Beginner</td><td>2 plies</td><td>1s</td><td>Learning friendly</td></tr>
-        <tr><td>Intermediate</td><td>3 plies</td><td>2s</td><td>Casual play</td></tr>
-        <tr><td>Advanced</td><td>4 plies</td><td>3s</td><td>Challenging</td></tr>
-        <tr><td>Professional</td><td>5 plies</td><td>5s</td><td>Strong amateur</td></tr>
-        <tr><td>Master</td><td>7 plies</td><td>10s</td><td>Advanced player</td></tr>
+        <tr><th>Level</th><th>Engine setting</th></tr>
+        <tr><td>Beginner</td><td>Depth 3</td></tr>
+        <tr><td>Intermediate</td><td>Depth 6</td></tr>
+        <tr><td>Advanced</td><td>Depth 10</td></tr>
+        <tr><td>Professional (default)</td><td>Depth 15</td></tr>
+        <tr><td>Master</td><td>Depth 20</td></tr>
+        <tr><td>Grandmaster</td><td>10 seconds a move</td></tr>
     </table>
 </section>
 
@@ -320,19 +321,14 @@
 <div class="divider"><hr></div>
 
 <section>
-    <h2>AI Techniques</h2>
+    <h2>The Engine</h2>
     <table>
-        <tr><th>Search</th><th>Evaluation</th></tr>
-        <tr><td>Alpha-Beta Pruning</td><td>Piece-Square Tables</td></tr>
-        <tr><td>Null Move Pruning</td><td>King Safety Analysis</td></tr>
-        <tr><td>Late Move Reductions</td><td>Piece Coordination</td></tr>
-        <tr><td>Aspiration Windows</td><td>Threat Detection</td></tr>
-        <tr><td>Iterative Deepening</td><td>Chariot Activity</td></tr>
-        <tr><td>Zobrist Hashing</td><td>Cannon Endgame Adjustment</td></tr>
-        <tr><td>Transposition Table</td><td>Crossed-River Bonuses</td></tr>
-        <tr><td>Killer & History Heuristics</td><td>Center Control</td></tr>
-        <tr><td>Quiescence Search</td><td>Check Bonus</td></tr>
-        <tr><td>MVV-LVA Move Ordering</td><td>30+ Opening Book Lines</td></tr>
+        <tr><th>Part</th><th>Detail</th></tr>
+        <tr><td>Engine</td><td>Pikafish, a Stockfish descendant built for xiangqi rules</td></tr>
+        <tr><td>Evaluation</td><td>NNUE neural network</td></tr>
+        <tr><td>On the phone</td><td>Native arm64 binary over UCI, 2 threads, 32 MB hash</td></tr>
+        <tr><td>Levels</td><td>Only the search depth (or time) changes; no skill limiter, no deliberate random moves</td></tr>
+        <tr><td>Fallback</td><td>A built-in alpha-beta search, used only if the engine cannot start</td></tr>
     </table>
 </section>
 
