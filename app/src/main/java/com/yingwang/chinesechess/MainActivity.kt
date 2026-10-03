@@ -72,6 +72,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var moveCountText: TextView
     private lateinit var gameModeText: TextView
     private lateinit var evalBar: EvalBarView
+    private lateinit var evalText: TextView
     private var evaluation: GameController.Evaluation? = null
     private var lastStats: GameController.GameStats? = null
 
@@ -184,6 +185,7 @@ class MainActivity : AppCompatActivity() {
         moveCountText = findViewById(R.id.moveCountText)
         gameModeText = findViewById(R.id.gameModeText)
         evalBar = findViewById(R.id.evalBar)
+        evalText = findViewById(R.id.evalText)
         statusText = findViewById(R.id.statusText)
         aiThinkingIndicator = findViewById(R.id.aiThinkingIndicator)
         thinkingDot1 = findViewById(R.id.thinkingDot1)
@@ -397,34 +399,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Each card shows the engine's view of the game from its own side. Without an engine
-     * (fallback search) the old material count stands in.
+     * One reading of the position, from red's side, at the end of the evaluation bar; the
+     * cards say what each side has taken. They used to show +0.2 and -0.2, the same number
+     * twice, above a bar that showed it a third time.
      */
     private fun updateScoreLines() {
+        val stats = lastStats
+        redScoreText.setText(if (stats?.redCapturedPieces.isNullOrEmpty()) R.string.captured_none else R.string.captured_label)
+        blackScoreText.setText(if (stats?.blackCapturedPieces.isNullOrEmpty()) R.string.captured_none else R.string.captured_label)
         val eval = evaluation
-        if (eval == null) {
-            redScoreText.text = getString(R.string.score_label, lastStats?.redScore ?: 0)
-            blackScoreText.text = getString(R.string.score_label, lastStats?.blackScore ?: 0)
-            return
-        }
-        redScoreText.text = evalText(eval, PieceColor.RED)
-        blackScoreText.text = evalText(eval, PieceColor.BLACK)
+        evalText.text = if (eval == null) "" else evalSummary(eval)
     }
 
-    private fun evalText(eval: GameController.Evaluation, side: PieceColor): String {
-        val sign = if (side == PieceColor.RED) 1 else -1
+    private fun evalSummary(eval: GameController.Evaluation): String {
         eval.mateRed?.let { mate ->
             // A mate count is a spoiler, so only a short one is spelled out.
-            val mine = mate * sign
             return when {
-                mine > 0 && mine <= MATE_HINT_LIMIT -> getString(R.string.eval_mate_win, mine)
-                mine < 0 && -mine <= MATE_HINT_LIMIT -> getString(R.string.eval_mate_loss, -mine)
-                mine > 0 -> getString(R.string.eval_winning)
-                else -> getString(R.string.eval_losing)
+                mate > 0 && mate <= MATE_HINT_LIMIT -> getString(R.string.eval_red_mates, mate)
+                mate < 0 && -mate <= MATE_HINT_LIMIT -> getString(R.string.eval_black_mates, -mate)
+                mate > 0 -> getString(R.string.eval_red_winning)
+                else -> getString(R.string.eval_black_winning)
             }
         }
-        val pawns = ((eval.cpRed ?: 0) * sign) / 100.0
-        return getString(R.string.eval_label, String.format(Locale.US, "%+.1f", pawns))
+        val pawns = (eval.cpRed ?: 0) / 100.0
+        return when {
+            pawns >= 0.3 -> getString(R.string.eval_red_better, String.format(Locale.US, "%.1f", pawns))
+            pawns <= -0.3 -> getString(R.string.eval_black_better, String.format(Locale.US, "%.1f", -pawns))
+            else -> getString(R.string.eval_even)
+        }
     }
 
     private fun updateGameStats(stats: GameController.GameStats) {
@@ -442,12 +444,17 @@ class MainActivity : AppCompatActivity() {
         container.removeAllViews()
         val sorted = pieces.sortedByDescending { it.type.baseValue }
         val dp = resources.displayMetrics.density
-        val size = (22 * dp).toInt()
+        // Shrink the chips to fit the card instead of letting the last ones scroll out of sight.
+        val available = (container.parent as? View)?.width ?: 0
+        val full = (22 * dp).toInt()
+        val size = if (available > 0 && sorted.isNotEmpty()) {
+            minOf(full, available / sorted.size - (2 * dp).toInt()).coerceAtLeast((12 * dp).toInt())
+        } else full
 
         for (piece in sorted) {
             val tv = TextView(this).apply {
                 text = piece.type.getDisplayName(piece.color)
-                textSize = 11f
+                textSize = 11f * size / full
                 typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
                 setTextColor(
                     ContextCompat.getColor(

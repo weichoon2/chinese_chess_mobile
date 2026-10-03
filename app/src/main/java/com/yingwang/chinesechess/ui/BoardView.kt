@@ -113,18 +113,27 @@ class BoardView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
 
+    // No text shadow: on a small piece it only blurs the stroke of the character.
     private val redTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = redInk
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
-        setShadowLayer(2f, 1f, 1f, Color.argb(70, 0, 0, 0))
     }
 
     private val blackTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = blackInk
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
-        setShadowLayer(2f, 1f, 1f, Color.argb(60, 255, 255, 255))
+    }
+
+    /**
+     * A flat cream wash over the centre of the piece texture. The photograph has a strong
+     * specular highlight and turned rings that compete with the character; this keeps the
+     * wooden rim and quietens the face.
+     */
+    private val pieceFacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(150, 242, 230, 205)
+        style = Paint.Style.FILL
     }
 
     private val pieceOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -140,27 +149,39 @@ class BoardView @JvmOverloads constructor(
     }
 
     private val pieceShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(90, 0, 0, 0)
+        color = Color.argb(55, 0, 0, 0)
         style = Paint.Style.FILL
-        maskFilter = BlurMaskFilter(10f, BlurMaskFilter.Blur.NORMAL)
+        maskFilter = BlurMaskFilter(6f, BlurMaskFilter.Blur.NORMAL)
     }
 
-    private val movedPieceHighlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(220, 160, 60)
-        strokeWidth = 4f
-        style = Paint.Style.STROKE
-    }
-
+    // Three marks, three looks: the last move is amber corner brackets (faint where it came
+    // from, solid where it went), the selected piece a solid celadon ring, and a general in
+    // check a red ring. They used to be variations on the same gold glow.
     private val lastMoveFromPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(90, 200, 170, 90)
+        color = Color.argb(120, 196, 120, 20)
         strokeWidth = 2.5f
         style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
     }
 
     private val lastMoveToPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(130, 220, 180, 70)
-        strokeWidth = 3f
+        color = Color.argb(235, 196, 120, 20)
+        strokeWidth = 4f
         style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    private val checkRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(205, 35, 35)
+        strokeWidth = 4.5f
+        style = Paint.Style.STROKE
+    }
+
+    private val checkGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(140, 230, 40, 40)
+        strokeWidth = 8f
+        style = Paint.Style.STROKE
+        maskFilter = BlurMaskFilter(10f, BlurMaskFilter.Blur.NORMAL)
     }
 
     private val legalMoveDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -181,16 +202,10 @@ class BoardView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
 
-    private val selectionGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = 4f
-        maskFilter = BlurMaskFilter(8f, BlurMaskFilter.Blur.NORMAL)
-    }
-
     private val selectionRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(210, 240, 180, 50)
+        color = Color.rgb(28, 128, 112)
         style = Paint.Style.STROKE
-        strokeWidth = 3.5f
+        strokeWidth = 4.5f
     }
 
     private var cellSize = 0f
@@ -323,8 +338,8 @@ class BoardView @JvmOverloads constructor(
         riverTextPaint.textSize = cellSize * 0.56f
         riverTextPaint.letterSpacing = 0.55f
         coordPaint.textSize = cellSize * 0.2f
-        redTextPaint.textSize = cellSize * 0.5f
-        blackTextPaint.textSize = cellSize * 0.5f
+        redTextPaint.textSize = cellSize * 0.54f
+        blackTextPaint.textSize = cellSize * 0.54f
 
         surfaceBitmap?.recycle()
         surfaceBitmap = buildSurface(w, h)
@@ -381,7 +396,7 @@ class BoardView @JvmOverloads constructor(
         // Planks: alternate light and dark bands across the width.
         val bands = LinearGradient(
             r.left, r.top, r.right, r.top,
-            intArrayOf(surfaceMid, surfaceLight, surfaceDark, surfaceLight, surfaceMid, surfaceLight, surfaceDark, surfaceMid),
+            intArrayOf(surfaceMid, surfaceLight, surfaceMid, surfaceLight, surfaceMid, surfaceLight, surfaceMid, surfaceMid),
             floatArrayOf(0f, 0.14f, 0.3f, 0.45f, 0.58f, 0.72f, 0.88f, 1f),
             Shader.TileMode.CLAMP
         )
@@ -395,7 +410,8 @@ class BoardView @JvmOverloads constructor(
             val x0 = r.left + rnd.nextFloat() * r.width()
             val dark = rnd.nextInt(9) == 0
             grainPaint.color = grainColor
-            grainPaint.alpha = if (dark) 18 + rnd.nextInt(10) else 6 + rnd.nextInt(11)
+            // Kept faint: the grain is texture, not something the eye should have to read past.
+            grainPaint.alpha = if (dark) 9 + rnd.nextInt(6) else 3 + rnd.nextInt(6)
             grainPaint.strokeWidth = if (dark) 1.6f + rnd.nextFloat() * 1.4f else 0.8f + rnd.nextFloat() * 1.0f
 
             path.reset()
@@ -418,7 +434,7 @@ class BoardView @JvmOverloads constructor(
         val radius = maxOf(r.width(), r.height()) * 0.72f
         val vignette = RadialGradient(
             cx, cy, radius,
-            intArrayOf(Color.TRANSPARENT, Color.TRANSPARENT, Color.argb(70, 60, 30, 8)),
+            intArrayOf(Color.TRANSPARENT, Color.TRANSPARENT, Color.argb(40, 60, 30, 8)),
             floatArrayOf(0f, 0.55f, 1f),
             Shader.TileMode.CLAMP
         )
@@ -524,13 +540,22 @@ class BoardView @JvmOverloads constructor(
 
     private fun drawLastMove(canvas: Canvas) {
         lastMove?.let { move ->
-            val halfCell = cellSize * 0.35f
-            val fromX = offsetX + move.from.col * cellSize
-            val fromY = offsetY + move.from.row * cellSize
-            canvas.drawRect(fromX - halfCell, fromY - halfCell, fromX + halfCell, fromY + halfCell, lastMoveFromPaint)
-            val toX = offsetX + move.to.col * cellSize
-            val toY = offsetY + move.to.row * cellSize
-            canvas.drawRect(toX - halfCell, toY - halfCell, toX + halfCell, toY + halfCell, lastMoveToPaint)
+            drawBrackets(canvas, move.from, lastMoveFromPaint)
+            drawBrackets(canvas, move.to, lastMoveToPaint)
+        }
+    }
+
+    /** Four corner brackets around an intersection, just outside a piece. */
+    private fun drawBrackets(canvas: Canvas, pos: Position, paint: Paint) {
+        val cx = offsetX + pos.col * cellSize
+        val cy = offsetY + pos.row * cellSize
+        val half = cellSize * 0.47f
+        val arm = cellSize * 0.15f
+        for ((dx, dy) in listOf(-1f to -1f, 1f to -1f, -1f to 1f, 1f to 1f)) {
+            val x0 = cx + dx * half
+            val y0 = cy + dy * half
+            canvas.drawLine(x0, y0, x0 - dx * arm, y0, paint)
+            canvas.drawLine(x0, y0, x0, y0 - dy * arm, paint)
         }
     }
 
@@ -539,13 +564,7 @@ class BoardView @JvmOverloads constructor(
             val x = offsetX + pos.col * cellSize
             val y = offsetY + pos.row * cellSize
             val radius = cellSize * 0.4f
-
-            for (i in 3 downTo 1) {
-                val glowRadius = radius + cellSize * 0.05f * i
-                selectionGlowPaint.color = Color.argb(30 + (3 - i) * 25, 255, 200, 80)
-                canvas.drawCircle(x, y, glowRadius, selectionGlowPaint)
-            }
-            canvas.drawCircle(x, y, radius + 2f, selectionRingPaint)
+            canvas.drawCircle(x, y, radius + 3f, selectionRingPaint)
 
             for (move in legalMoves) drawLegalMoveIndicator(canvas, move)
         }
@@ -593,7 +612,6 @@ class BoardView @JvmOverloads constructor(
         val x = getDrawX(piece)
         val y = getDrawY(piece)
         val radius = cellSize * 0.4f
-        val isMovedPiece = lastMove?.to == piece.position && animatingMove == null
 
         if (alpha > 128) {
             canvas.drawCircle(x + 3f, y + 5f, radius + 1f, pieceShadowPaint)
@@ -606,6 +624,8 @@ class BoardView @JvmOverloads constructor(
             bitmapPaint.alpha = alpha
             canvas.drawBitmap(pbmp, src, dst, bitmapPaint)
             bitmapPaint.alpha = 255
+            pieceFacePaint.alpha = 150 * alpha / 255
+            canvas.drawCircle(x, y, radius * 0.8f, pieceFacePaint)
         } else {
             val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.argb(alpha, 160, 130, 95)
@@ -640,8 +660,9 @@ class BoardView @JvmOverloads constructor(
             pieceInnerRingPaint.alpha = 80
         }
 
-        if (isMovedPiece) {
-            canvas.drawCircle(x, y, radius + 3f, movedPieceHighlightPaint)
+        if (piece.type == PieceType.GENERAL && animatingMove == null && board.isInCheck(piece.color)) {
+            canvas.drawCircle(x, y, radius + 4f, checkGlowPaint)
+            canvas.drawCircle(x, y, radius + 3f, checkRingPaint)
         }
 
         val textPaint = if (piece.color == PieceColor.RED) redTextPaint else blackTextPaint
