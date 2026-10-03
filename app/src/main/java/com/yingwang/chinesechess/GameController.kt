@@ -5,6 +5,7 @@ import android.util.Log
 import com.yingwang.chinesechess.ai.ChessAI
 import com.yingwang.chinesechess.audio.GameAudioManager
 import com.yingwang.chinesechess.ai.PikafishEngine
+import com.yingwang.chinesechess.ai.WeakPlay
 import com.yingwang.chinesechess.model.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -31,7 +32,14 @@ class GameController(
      * (positive = red mates). Null when the engine is unavailable.
      */
     data class Evaluation(val cpRed: Int?, val mateRed: Int?)
-    enum class AIDifficulty(val pikafishDepth: Int) {
+    /**
+     * [candidates] above 1 makes the level choose among that many engine moves instead of
+     * always the best (see [com.yingwang.chinesechess.ai.WeakPlay]); [spreadCp] is how far
+     * from the best it is willing to stray.
+     */
+    enum class AIDifficulty(val pikafishDepth: Int, val candidates: Int = 1, val spreadCp: Int = 0) {
+        NOVICE(4, candidates = 6, spreadCp = 100),
+        LEARNER(4, candidates = 6, spreadCp = 60),
         BEGINNER(3),
         INTERMEDIATE(6),
         ADVANCED(10),
@@ -269,10 +277,20 @@ class GameController(
      */
     private suspend fun searchBestMove(candidates: List<Move>?): Pair<Move?, PikafishEngine.Score?> {
         if (candidates != null && candidates.isEmpty()) return null to null
-        val depth = if (difficulty.pikafishDepth > 0) difficulty.pikafishDepth else 0
+        // An endgame study is only a study against the best defence, whatever the level.
+        val depth = when {
+            isEndgameMode -> ENDGAME_DEFENCE_DEPTH
+            difficulty.pikafishDepth > 0 -> difficulty.pikafishDepth
+            else -> 0
+        }
         val timeMs = if (depth == 0) 10000L else 0L  // 棋圣: 10s unlimited
         val fromEngine = engineMutex.withLock {
             val engine = ensurePikafish() ?: return@withLock null
+            if (difficulty.candidates > 1 && !isEndgameMode) {
+                val options = engine.findCandidates(board, depth, difficulty.candidates, candidates)
+                val choice = WeakPlay.pick(options, difficulty.spreadCp) ?: return@withLock null
+                return@withLock choice to options.first { it.first == choice }.second
+            }
             val move = engine.findBestMove(board, depth = depth, moveTimeMs = timeMs, searchMoves = candidates)
             if (move != null) move to engine.lastScore else null
         }
@@ -677,6 +695,9 @@ class GameController(
     companion object {
         /** Floor on how long an AI move appears to take, so replies never look instant. */
         private const val MIN_THINK_MS = 900L
+
+        /** Search depth for the defending side of an endgame study. */
+        private const val ENDGAME_DEFENCE_DEPTH = 12
 
         /** Difficulty stored with the saved game, so resuming rebuilds the same opponent. */
         fun savedDifficulty(context: Context): AIDifficulty? {

@@ -20,6 +20,8 @@ object RatingSystem {
 
     // AI ratings by difficulty
     private val AI_RATINGS = mapOf(
+        GameController.AIDifficulty.NOVICE to 300,
+        GameController.AIDifficulty.LEARNER to 500,
         GameController.AIDifficulty.BEGINNER to 800,
         GameController.AIDifficulty.INTERMEDIATE to 1000,
         GameController.AIDifficulty.ADVANCED to 1300,

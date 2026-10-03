@@ -77,6 +77,12 @@
     <string name="endgame_select_title">选择残局</string>
     <string name="endgame_item">%1$s - %2$s</string>
     <string name="difficulty_title">选择 AI 难度</string>
+    <string name="difficulty_first_title">你下象棋的水平？</string>
+    <string name="challenge_mode">挑战模式</string>
+    <string name="challenge_mode_note">计入积分，不能提示和悔棋。关掉就是练习模式，可以随时提示、悔棋，不影响积分。</string>
+    <string name="challenge_no_hint">挑战模式不能提示</string>
+    <string name="challenge_no_undo">挑战模式不能悔棋</string>
+    <string name="mode_challenge">挑战 · %1$s</string>
     <string name="difficulty_restart_title">更换难度</string>
     <string name="difficulty_restart_message">更换难度会重新开始当前棋局，继续吗？</string>
     <string name="change_difficulty">AI 难度</string>
@@ -106,15 +112,19 @@
     <string name="about_body">中国象棋 %1$s\n\n专业级 AI 引擎特性:\n• Pikafish NNUE 强力深度博弈\n• 置换表与静态搜索\n• 走法排序与静止搜索优化\n• 动态 ELO 积分天梯系统\n\n%2$s</string>
 
     <!-- Order matches GameController.AIDifficulty -->
-    <string-array name="difficulty_names">
-        <item>初级 (Beginner)</item>
-        <item>中级 (Intermediate)</item>
-        <item>高级 (Advanced)</item>
-        <item>专业 (Professional)</item>
-        <item>大师 (Master)</item>
-        <item>棋圣 (Grandmaster)</item>
+    <string-array name="difficulty_notes">
+        <item>刚学会走棋，电脑常常失误</item>
+        <item>认得基本杀法，电脑偶有失误</item>
+        <item>下过不少棋，电脑不再送子</item>
+        <item>有一定功底</item>
+        <item>业余高手</item>
+        <item>接近职业水平</item>
+        <item>极难取胜</item>
+        <item>引擎全力，超越人类</item>
     </string-array>
     <string-array name="difficulty_short">
+        <item>新手</item>
+        <item>入门</item>
         <item>初级</item>
         <item>中级</item>
         <item>高级</item>

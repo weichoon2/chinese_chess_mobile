@@ -124,6 +124,66 @@ class PikafishEngine(private val context: Context) : Closeable {
     }
 
     /**
+     * The best [multiPv] root moves at [depth], best first, each with its score for the side
+     * to move. Pikafish has no Skill Level or UCI_Elo, so the weak levels pick among these
+     * themselves (see [WeakPlay]). MultiPV is put back to 1 afterwards; every other search
+     * assumes it.
+     */
+    suspend fun findCandidates(
+        board: Board,
+        depth: Int,
+        multiPv: Int,
+        searchMoves: List<Move>? = null
+    ): List<Pair<Move, Score>> = withContext(Dispatchers.IO) {
+        if (!isReady) return@withContext emptyList()
+        if (searchMoves != null && searchMoves.isEmpty()) return@withContext emptyList()
+
+        sendCommand("setoption name MultiPV value $multiPv")
+        sendCommand("position fen ${boardToFen(board)}")
+        sendCommand(buildString {
+            append("go depth $depth")
+            if (searchMoves != null) {
+                append(" searchmoves ")
+                append(searchMoves.joinToString(" ") { posToUci(it.from) + posToUci(it.to) })
+            }
+        })
+
+        // The last line for each multipv index carries the deepest result for that move.
+        val lines = sortedMapOf<Int, Pair<String, Score>>()
+        while (true) {
+            val line = reader?.readLine() ?: break
+            if (line.startsWith("info ")) {
+                parseScore(line)?.let { lastScore = it }
+                parseMultiPv(line)?.let { (index, uci, score) -> lines[index] = uci to score }
+            } else if (line.startsWith("bestmove")) {
+                break
+            }
+        }
+        sendCommand("setoption name MultiPV value 1")
+
+        lines.values.mapNotNull { (uci, score) -> uciToMove(uci, board)?.let { it to score } }
+    }
+
+    /** (multipv index, first move of its line, score) from an `info` line that has all three. */
+    private fun parseMultiPv(line: String): Triple<Int, String, Score>? {
+        val parts = line.split(" ")
+        val m = parts.indexOf("multipv")
+        if (m < 0) return null
+        val index = parts.getOrNull(m + 1)?.toIntOrNull() ?: return null
+        val pv = parts.indexOf("pv")
+        val uci = parts.getOrNull(pv + 1)?.takeIf { pv >= 0 } ?: return null
+        val i = parts.indexOf("score")
+        if (i < 0) return null
+        val value = parts.getOrNull(i + 2)?.toIntOrNull() ?: return null
+        val score = when (parts.getOrNull(i + 1)) {
+            "cp" -> Score(cp = value, mate = null)
+            "mate" -> Score(cp = null, mate = value)
+            else -> return null
+        }
+        return Triple(index, uci, score)
+    }
+
+    /**
      * Quick evaluation of a position, for the side to move. Shallow by default so it can run
      * after every move without a visible pause.
      */

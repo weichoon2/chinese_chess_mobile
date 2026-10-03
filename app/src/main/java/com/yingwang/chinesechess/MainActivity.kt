@@ -8,6 +8,9 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -28,6 +31,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.yingwang.chinesechess.GameController.AIDifficulty
 import com.yingwang.chinesechess.GameController.GameMode
 import com.yingwang.chinesechess.audio.GameAudioManager
@@ -47,6 +51,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         /** Mates farther away than this are shown as a plain "winning"/"losing". */
         private const val MATE_HINT_LIMIT = 3
+        private const val KEY_DIFFICULTY = "difficulty"
+        private const val KEY_CHALLENGE = "challenge"
     }
 
     private lateinit var boardView: BoardView
@@ -116,14 +122,20 @@ class MainActivity : AppCompatActivity() {
         // Mute used to reset on every launch, so the guqin came back each time.
         isMuted = settings.getBoolean("muted", false)
         audioManager.setMuted(isMuted)
-        // A saved game remembers its difficulty; start the controller with it so
-        // resuming faces the same opponent instead of always PROFESSIONAL.
-        val startDifficulty = GameController.savedDifficulty(this) ?: AIDifficulty.PROFESSIONAL
+        // A saved game remembers its difficulty; start the controller with it so resuming
+        // faces the same opponent. Otherwise the level last chosen, and on the very first
+        // launch 初级 until the player says otherwise: starting everyone at 专业 meant a
+        // newcomer's first game was a rout.
+        val startDifficulty = GameController.savedDifficulty(this) ?: preferredDifficulty() ?: AIDifficulty.BEGINNER
         gameController = GameController(this, startDifficulty, audioManager)
         initViews()
         setupGameControllerCallbacks()
         gameController.startNewGame()
         startTimerUpdates()
+
+        if (!gameController.hasSavedGame(this) && preferredDifficulty() == null) {
+            showDifficultyDialog(firstRun = true)
+        }
 
         if (gameController.hasSavedGame(this)) {
             AlertDialog.Builder(this, R.style.ChessDialogTheme)
@@ -184,6 +196,10 @@ class MainActivity : AppCompatActivity() {
         moreButton.setOnClickListener { showMoreDialog() }
 
         undoButton.setOnClickListener {
+            if (isRatedGame()) {
+                toast(R.string.challenge_no_undo)
+                return@setOnClickListener
+            }
             if (gameController.getMoveHistory().isEmpty()) {
                 toast(R.string.undo_none)
                 return@setOnClickListener
@@ -202,6 +218,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         hintButton.setOnClickListener {
+            if (isRatedGame()) {
+                toast(R.string.challenge_no_hint)
+                return@setOnClickListener
+            }
             if (!gameController.isPlayerTurn()) {
                 toast(R.string.not_your_turn)
                 return@setOnClickListener
@@ -240,7 +260,7 @@ class MainActivity : AppCompatActivity() {
                 val isVsAI = gameController.getGameMode() == GameMode.PLAYER_VS_AI
 
                 fun rated(score: Double): String {
-                    if (!isVsAI) return ""
+                    if (!isVsAI || !isRatedGame()) return ""
                     val change = RatingSystem.recordGame(this, gameController.getDifficulty(), score)
                     val stats = RatingSystem.getStats(this)
                     val sign = if (change >= 0) "+" else ""
@@ -507,7 +527,9 @@ class MainActivity : AppCompatActivity() {
         gameController.isEndgameMode() -> getString(R.string.mode_endgame)
         else -> when (gameController.getGameMode()) {
             GameMode.PLAYER_VS_PLAYER -> getString(R.string.mode_pvp)
-            GameMode.PLAYER_VS_AI -> getString(R.string.mode_pvai, difficultyShortName())
+            GameMode.PLAYER_VS_AI -> getString(
+                if (isRatedGame()) R.string.mode_challenge else R.string.mode_pvai, difficultyShortName()
+            )
             GameMode.AI_VS_AI -> getString(R.string.mode_aivai)
         }
     }
@@ -539,6 +561,10 @@ class MainActivity : AppCompatActivity() {
         }
         redRoleText.setText(redRole)
         blackRoleText.setText(blackRole)
+        // Challenge games keep the buttons in place but greyed, so the layout does not jump.
+        val locked = isRatedGame()
+        hintButton.alpha = if (locked) 0.4f else 1f
+        undoButton.alpha = if (locked) 0.4f else 1f
         updateStatus()
     }
 
@@ -626,16 +652,68 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Picks a difficulty, rebuilds the controller with it and starts a fresh game in the current mode. */
-    private fun showDifficultyDialog() {
-        val difficulties = resources.getStringArray(R.array.difficulty_names)
+    private fun preferredDifficulty(): AIDifficulty? =
+        settings.getString(KEY_DIFFICULTY, null)?.let { name -> AIDifficulty.values().firstOrNull { it.name == name } }
+
+    /** Challenge games count towards the rating and allow no hints or take-backs; practice games are the opposite. */
+    private val challengeMode: Boolean get() = settings.getBoolean(KEY_CHALLENGE, false)
+
+    /** Whether hints and undo are withheld in the game on the board. */
+    private fun isRatedGame(): Boolean =
+        challengeMode && gameController.getGameMode() == GameMode.PLAYER_VS_AI && !gameController.isEndgameMode()
+
+    /**
+     * Picks a level (each with a line on who it suits) and practice or challenge, rebuilds the
+     * controller with them and starts a fresh game in the current mode. On the first launch the
+     * same dialog asks the player's level; leaving it keeps 初级.
+     */
+    private fun showDifficultyDialog(firstRun: Boolean = false) {
+        val names = resources.getStringArray(R.array.difficulty_short)
+        val notes = resources.getStringArray(R.array.difficulty_notes)
+        val items = names.indices.map { i ->
+            SpannableStringBuilder(names[i]).apply {
+                append("\n")
+                val start = length
+                append(notes[i])
+                setSpan(RelativeSizeSpan(0.8f), start, length, 0)
+                setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(this@MainActivity, R.color.chess_text_secondary)),
+                    start, length, 0
+                )
+            }
+        }.toTypedArray<CharSequence>()
+        var chosen = (preferredDifficulty() ?: gameController.getDifficulty()).ordinal
         val currentMode = gameController.getGameMode()
         val currentAIColor = gameController.getAIColor()
 
+        val dp = resources.displayMetrics.density
+        val challengeSwitch = SwitchMaterial(this).apply {
+            setText(R.string.challenge_mode)
+            isChecked = challengeMode
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.chess_text))
+        }
+        val challengeNote = TextView(this).apply {
+            setText(R.string.challenge_mode_note)
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.chess_text_secondary))
+        }
+        val footer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((24 * dp).toInt(), (4 * dp).toInt(), (24 * dp).toInt(), 0)
+            addView(challengeSwitch)
+            addView(challengeNote)
+        }
+
         AlertDialog.Builder(this, R.style.ChessDialogTheme)
-            .setTitle(R.string.difficulty_title)
-            .setAdapter(styledListAdapter(difficulties)) { _, which ->
-                val difficulty = AIDifficulty.values().getOrElse(which) { AIDifficulty.PROFESSIONAL }
+            .setTitle(if (firstRun) R.string.difficulty_first_title else R.string.difficulty_title)
+            .setSingleChoiceItems(items, chosen) { _, which -> chosen = which }
+            .setView(footer)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val difficulty = AIDifficulty.values()[chosen]
+                settings.edit()
+                    .putString(KEY_DIFFICULTY, difficulty.name)
+                    .putBoolean(KEY_CHALLENGE, challengeSwitch.isChecked)
+                    .apply()
 
                 gameController.destroy()
                 gameController = GameController(this@MainActivity, difficulty, audioManager)
@@ -644,6 +722,12 @@ class MainActivity : AppCompatActivity() {
                 gameController.setGameMode(currentMode, currentAIColor)
                 gameController.startNewGame()
                 updateGameModeDisplay()
+            }
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                if (firstRun) settings.edit().putString(KEY_DIFFICULTY, gameController.getDifficulty().name).apply()
+            }
+            .setOnCancelListener {
+                if (firstRun) settings.edit().putString(KEY_DIFFICULTY, gameController.getDifficulty().name).apply()
             }
             .show()
     }
