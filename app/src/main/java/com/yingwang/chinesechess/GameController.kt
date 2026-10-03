@@ -5,6 +5,7 @@ import android.util.Log
 import com.yingwang.chinesechess.ai.ChessAI
 import com.yingwang.chinesechess.audio.GameAudioManager
 import com.yingwang.chinesechess.ai.PikafishEngine
+import com.yingwang.chinesechess.ai.Review
 import com.yingwang.chinesechess.ai.WeakPlay
 import com.yingwang.chinesechess.model.*
 import kotlinx.coroutines.*
@@ -331,6 +332,9 @@ class GameController(
         val replayAt = replayIndex
         coroutineScope.launch {
             val score = engineMutex.withLock {
+                // Scrubbing through a replay queues a look at every position passed; only the
+                // one still on the board is worth the engine's time.
+                if (generation != gameGeneration || moveCount != moveHistory.size || replayAt != replayIndex) return@withLock null
                 val engine = ensurePikafish() ?: return@withLock null
                 engine.evaluate(snapshot, depth = 10)
             }
@@ -765,7 +769,8 @@ class GameController(
         private const val REVIEW_DEPTH = 8
         private const val REVIEW_BEST_DEPTH = 12
         /** A move that loses less than this is not called a mistake. */
-        private const val MISTAKE_THRESHOLD_CP = 120
+        /** A move that gives away this much of the game (about 120 cp from level) is a mistake. */
+        private const val MISTAKE_THRESHOLD_SHARE = 0.10
 
         /** Search depth for the defending side of an endgame study. */
         private const val ENDGAME_DEFENCE_DEPTH = 12
@@ -804,7 +809,7 @@ class GameController(
     /**
      * Scores every position of the game at a shallow depth, for the graph of how it went,
      * and finds the [player]'s move with the largest drop (none when no move lost more than
-     * [MISTAKE_THRESHOLD_CP], or when [player] is null). Null when the engine is unavailable.
+     * [MISTAKE_THRESHOLD_SHARE], or when [player] is null). Null when the engine is unavailable.
      * Runs off the main thread; [onDone] is called on it.
      */
     fun analyzeGame(player: PieceColor?, onDone: (Analysis?) -> Unit) {
@@ -827,16 +832,20 @@ class GameController(
                     } else toRedPerspective(sc, positions[i].currentPlayer)
                 }
 
-                var worst: Pair<Int, Int>? = null  // index, delta
+                // The costliest move is the one that lost the most of the player's share of the
+                // game, not the most centipawns: in a lost game the biggest centipawn drops come
+                // after the game was already gone.
+                var worst: Pair<Int, Double>? = null  // index, cost
                 if (player != null) for (i in moves.indices) {
                     if (moves[i].piece.color != player) continue
                     val before = scores[i] ?: continue
                     val after = scores[i + 1] ?: continue
-                    // After the move it is the opponent's turn, so their score is the player's loss.
-                    val drop = WeakPlay.comparable(before) + WeakPlay.comparable(after)
-                    if (worst == null || drop > worst.second) worst = i to drop
+                    val cost = Review.cost(before, after)
+                    if (worst == null || cost > worst.second) worst = i to cost
                 }
-                val mistake = worst?.takeIf { it.second >= MISTAKE_THRESHOLD_CP }?.let { (index, delta) ->
+                val mistake = worst?.takeIf { it.second >= MISTAKE_THRESHOLD_SHARE }?.let { (index, _) ->
+                    // After the move it is the opponent's turn, so their score is the player's loss.
+                    val delta = WeakPlay.comparable(scores[index]!!) + WeakPlay.comparable(scores[index + 1]!!)
                     val better = engine.findBestMove(positions[index], depth = REVIEW_BEST_DEPTH)
                     Mistake(
                         index = index,

@@ -57,6 +57,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_DIFFICULTY = "difficulty"
         private const val KEY_CHALLENGE = "challenge"
         private const val KEY_SHOW_EVAL = "show_eval"
+        /** Room the board leaves under itself for the move strip (activity_main.xml). */
+        private const val BOARD_RESERVE_DP = 56
     }
 
     private lateinit var boardView: BoardView
@@ -87,6 +89,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var thinkingDot1: View
     private lateinit var thinkingDot2: View
     private lateinit var thinkingDot3: View
+
+    // Review: the panel under the replay bar, and the analysis of the game it shows, kept
+    // while the game's moves are unchanged.
+    private lateinit var reviewPanel: View
+    private lateinit var reviewInfoText: TextView
+    private lateinit var reviewGraph: EvalGraphView
+    private var review: GameController.Analysis? = null
+    private var reviewedMoves: List<com.yingwang.chinesechess.model.Move>? = null
+    private var reviewRunning = false
 
     private lateinit var moveHistoryText: TextView
     private lateinit var moveStrip: View
@@ -203,6 +214,16 @@ class MainActivity : AppCompatActivity() {
         replayBar = findViewById(R.id.replayBar)
         replayProgressText = findViewById(R.id.replayProgressText)
         moveStrip.setOnClickListener { showFullHistory() }
+        reviewPanel = findViewById(R.id.reviewPanel)
+        reviewInfoText = findViewById(R.id.reviewInfoText)
+        reviewGraph = findViewById(R.id.reviewGraph)
+        reviewGraph.setOnPickListener { index ->
+            if (gameController.isInReplayMode()) {
+                gameController.replayGoTo(index)
+                updateReplayBar()
+            }
+        }
+        boardView.onBlockedTouch = { toast(R.string.replay_blocked) }
         findViewById<View>(R.id.replayStartButton).setOnClickListener { gameController.replayToStart(); updateReplayBar() }
         findViewById<View>(R.id.replayPrevButton).setOnClickListener {
             if (!gameController.replayStepBack()) toast(R.string.replay_at_start)
@@ -275,7 +296,10 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 boardView.setBoard(board)
                 updateStatus()
-                if (gameController.getMoveHistory().isEmpty()) {
+                // No last move to mark on an empty game or at the start of a replay.
+                if (gameController.getMoveHistory().isEmpty() ||
+                    (gameController.isInReplayMode() && gameController.getReplayIndex() == 0)
+                ) {
                     boardView.highlightMove(null)
                 }
             }
@@ -646,7 +670,7 @@ class MainActivity : AppCompatActivity() {
                 updateGameModeDisplay()
             }
         if (gameController.getMoveHistory().isNotEmpty()) {
-            builder.setNegativeButton(R.string.review_game) { _, _ -> showAnalysis() }
+            builder.setNegativeButton(R.string.review_game) { _, _ -> startReview() }
         }
         builder.setNeutralButton(R.string.close, null)
         builder.show()
@@ -657,64 +681,100 @@ class MainActivity : AppCompatActivity() {
         if (gameController.getGameMode() == GameMode.PLAYER_VS_AI) gameController.getAIColor().opposite() else null
 
     /**
-     * Scores the whole game and shows how it went as a graph, with the player's costliest
-     * move marked. Tapping the graph opens the replay at that position; the button below
-     * opens it at the mistake with the better move drawn.
+     * Reviews the game on the board: replay it with the graph of how it went under the board,
+     * opening at the player's costliest move with the better one drawn. The analysis takes a few
+     * seconds, so the replay opens at once and the panel fills in when it is ready.
      */
-    private fun showAnalysis() {
+    private fun startReview() {
         if (gameController.getMoveHistory().isEmpty()) {
             toast(R.string.replay_none)
             return
         }
-        val working = Snackbar.make(boardView, R.string.review_running, Snackbar.LENGTH_INDEFINITE)
-        working.show()
-        val moves = gameController.getMoveHistory()
+        if (!gameController.isInReplayMode()) gameController.enterReplayMode()
+        updateGameModeDisplay()
+        currentReview()?.let { openReviewAt(it); return }
+        val moves = gameController.getMoveHistory().toList()
+        reviewRunning = true
+        updateReplayBar()
         gameController.analyzeGame(humanSide()) { analysis ->
             runOnUiThread {
-                working.dismiss()
+                reviewRunning = false
                 if (analysis == null) {
                     Snackbar.make(boardView, R.string.analysis_unavailable, Snackbar.LENGTH_LONG).show()
+                    updateReplayBar()
                     return@runOnUiThread
                 }
-                val dp = resources.displayMetrics.density
-                val graph = EvalGraphView(this).apply {
-                    setData(
-                        analysis.evals.map { e -> e?.let { it.cpRed to it.mateRed } },
-                        analysis.mistake?.index,
-                        if (gameController.isInReplayMode()) gameController.getReplayIndex() else null
-                    )
-                }
-                val summary = TextView(this).apply {
-                    textSize = 13f
-                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.chess_text_secondary))
-                    text = buildString {
-                        append(getString(R.string.analysis_hint))
-                        analysis.mistake?.let { m -> append("\n\n").append(mistakeText(m, moves)) }
-                            ?: if (humanSide() != null) append("\n\n").append(getString(R.string.review_none)) else Unit
-                    }
-                }
-                val content = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding((20 * dp).toInt(), (4 * dp).toInt(), (20 * dp).toInt(), 0)
-                    addView(graph, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (160 * dp).toInt()))
-                    addView(summary, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-                        topMargin = (12 * dp).toInt()
-                    })
-                }
-                val builder = AlertDialog.Builder(this, R.style.ChessDialogTheme)
-                    .setTitle(R.string.analysis_title)
-                    .setView(content)
-                    .setNeutralButton(R.string.close, null)
-                analysis.mistake?.let { m ->
-                    builder.setPositiveButton(R.string.analysis_goto_mistake) { _, _ -> openMistake(m, moves) }
-                }
-                val dialog = builder.show()
-                graph.setOnPickListener { index ->
-                    dialog.dismiss()
-                    openReplayAt(index)
-                }
+                review = analysis
+                reviewedMoves = moves
+                reviewGraph.setData(
+                    analysis.evals.map { e -> e?.let { it.cpRed to it.mateRed } },
+                    analysis.mistake?.index,
+                    gameController.getReplayIndex()
+                )
+                if (gameController.isInReplayMode() && currentReview() != null) openReviewAt(analysis) else updateReplayBar()
             }
         }
+    }
+
+    private fun openReviewAt(analysis: GameController.Analysis) {
+        analysis.mistake?.let { gameController.replayGoTo(it.index) }
+        updateReplayBar()
+    }
+
+    /** The analysis of the game on the board, if its moves have not changed since. */
+    private fun currentReview(): GameController.Analysis? {
+        val analysed = reviewedMoves ?: return null
+        val moves = gameController.getMoveHistory()
+        if (analysed.size != moves.size) return null
+        if (analysed.indices.any { analysed[it].from != moves[it].from || analysed[it].to != moves[it].to }) return null
+        return review
+    }
+
+    /**
+     * Shows the review panel while an analysed game is replayed, with the line for the position
+     * on the board. The better move is drawn only at the mistake, so stepping away hides it.
+     */
+    private fun updateReviewPanel() {
+        val analysis = currentReview()
+        val replaying = gameController.isInReplayMode()
+        val show = replaying && (analysis != null || reviewRunning)
+        if (show != (reviewPanel.visibility == View.VISIBLE)) {
+            reviewPanel.visibility = if (show) View.VISIBLE else View.GONE
+            // The board leaves room for the panel; on a tall phone it keeps its full width anyway.
+            val dp = resources.displayMetrics.density
+            val reserve = (BOARD_RESERVE_DP * dp).toInt() +
+                if (show) resources.getDimensionPixelSize(R.dimen.review_panel_height) + (6 * dp).toInt() else 0
+            (boardView.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin = reserve
+            boardView.requestLayout()
+        }
+        val index = gameController.getReplayIndex()
+        val mistake = analysis?.mistake
+        boardView.showSuggestion(if (replaying && mistake != null && index == mistake.index) mistake.better else null)
+        if (!show) return
+        if (analysis == null) {
+            reviewInfoText.setText(R.string.review_running)
+            reviewGraph.setData(emptyList(), null, null)
+            return
+        }
+        reviewGraph.setCurrent(index)
+        reviewInfoText.text = reviewLine(analysis, index)
+    }
+
+    /** What happened at the position after [index] moves: the move that led to it and the reading. */
+    private fun reviewLine(analysis: GameController.Analysis, index: Int): String {
+        val moves = gameController.getMoveHistory()
+        analysis.mistake?.takeIf { it.index == index }?.let { return mistakeText(it, moves) }
+        if (index == 0 || index > moves.size) return getString(R.string.review_start)
+        val before = gameController.getInitialBoard().copy()
+        for (i in 0 until index - 1) before.makeMoveInPlace(moves[i])
+        val move = moves[index - 1]
+        val side = getString(if (move.piece.color == PieceColor.RED) R.string.red_short else R.string.black_short)
+        val reading = analysis.evals.getOrNull(index)?.let { evalSummary(it) } ?: ""
+        val line = getString(R.string.review_line, (index - 1) / 2 + 1, side, notation(move, before), reading)
+        // The review opens on the last position when there is no mistake to show; say so there.
+        return if (index == moves.size && analysis.mistake == null && humanSide() != null) {
+            line + "\n" + getString(R.string.review_none)
+        } else line
     }
 
     private fun mistakeText(m: GameController.Mistake, moves: List<com.yingwang.chinesechess.model.Move>): String {
@@ -726,24 +786,6 @@ class MainActivity : AppCompatActivity() {
         val to = m.after?.let { evalSummary(it) } ?: "?"
         return m.better?.let { getString(R.string.review_result, round, played, from, to, notation(it, before)) }
             ?: getString(R.string.review_result_plain, round, played, from, to)
-    }
-
-    private fun openReplayAt(index: Int) {
-        if (!gameController.isInReplayMode()) gameController.enterReplayMode()
-        boardView.showSuggestion(null)
-        gameController.replayGoTo(index)
-        updateGameModeDisplay()
-        updateReplayBar()
-    }
-
-    /** The replay just before the mistake, with the better move drawn as an arrow. */
-    private fun openMistake(m: GameController.Mistake, moves: List<com.yingwang.chinesechess.model.Move>) {
-        openReplayAt(m.index)
-        boardView.showSuggestion(m.better)
-        Snackbar.make(boardView, mistakeText(m, moves), Snackbar.LENGTH_INDEFINITE)
-            .setAction(R.string.review_ok) { boardView.showSuggestion(null) }
-            .setTextMaxLines(5)
-            .show()
     }
 
     // ── Dialogs ──
@@ -868,11 +910,15 @@ class MainActivity : AppCompatActivity() {
         val replaying = gameController.isInReplayMode()
         replayBar.visibility = if (replaying) View.VISIBLE else View.GONE
         moveStrip.visibility = if (replaying) View.GONE else View.VISIBLE
+        // A replayed position is only to look at: no picking up pieces, no stale selection.
+        boardView.acceptsInput = !replaying
         if (replaying) {
+            boardView.clearSelection()
             replayProgressText.text = getString(
                 R.string.replay_counter, gameController.getReplayIndex(), gameController.getReplayLength()
             )
         }
+        updateReviewPanel()
     }
 
     private fun exitReplay() {
@@ -1037,7 +1083,7 @@ class MainActivity : AppCompatActivity() {
                     0 -> toggleMute()
                     1 -> changeDifficulty()
                     2 -> toggleEval()
-                    3 -> showAnalysis()
+                    3 -> startReview()
                     4 -> toggleReplay()
                     5 -> exportMoveHistory()
                     6 -> showStatsDialog()

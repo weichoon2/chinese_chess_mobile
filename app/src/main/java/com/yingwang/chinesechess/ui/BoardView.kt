@@ -720,8 +720,20 @@ class BoardView @JvmOverloads constructor(
 
     // ── Touch handling ──
 
+    /** False while the board only shows a position (a replay); a touch then reports [onBlockedTouch]. */
+    var acceptsInput = true
+        set(value) {
+            field = value
+            if (!value) clearSelection()
+        }
+    var onBlockedTouch: (() -> Unit)? = null
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (animatingMove != null) return true // block during animation
+        if (!acceptsInput) {
+            if (event.action == MotionEvent.ACTION_DOWN) onBlockedTouch?.invoke()
+            return true
+        }
 
         if (event.action == MotionEvent.ACTION_DOWN) {
             val touchedPos = getTouchedPosition(event.x, event.y)

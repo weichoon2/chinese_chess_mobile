@@ -428,6 +428,45 @@
         </LinearLayout>
     </FrameLayout>
 
+    <!-- The review: what happened at the position on the board, and the graph of the whole
+         game to scrub through. Shown only while replaying an analysed game; the board then
+         reserves room for it. -->
+    <LinearLayout
+        android:id="@+id/reviewPanel"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/review_panel_height"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/info_panel_background"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/belowBoard">
+
+        <TextView
+            android:id="@+id/reviewInfoText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="serif"
+            android:maxLines="3"
+            android:textColor="@color/chess_history_text"
+            android:textSize="13sp" />
+
+        <com.yingwang.chinesechess.ui.EvalGraphView
+            android:id="@+id/reviewGraph"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="6dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+
     <LinearLayout
         android:id="@+id/buttonContainer"
         android:layout_width="0dp"

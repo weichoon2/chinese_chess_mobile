@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The review panel under the replay bar; the board leaves this much more room for it.
+         130dp fits the free space under the board on a 443dp-wide phone, so the board keeps
+         its size there. -->
+    <dimen name="review_panel_height">130dp</dimen>
+</resources>

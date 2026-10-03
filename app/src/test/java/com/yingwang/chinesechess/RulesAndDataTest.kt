@@ -1,6 +1,7 @@
 package com.yingwang.chinesechess
 
 import com.yingwang.chinesechess.ai.PikafishEngine
+import com.yingwang.chinesechess.ai.Review
 import com.yingwang.chinesechess.ai.WeakPlay
 import com.yingwang.chinesechess.model.Board
 import com.yingwang.chinesechess.model.Fen
@@ -94,5 +95,16 @@ class RulesAndDataTest {
             assertEquals("$id: mate length", study.getInt("mate_in"), redMoves)
             assertNotNull(study.optString("source"))
         }
+    }
+
+    @Test
+    fun theReviewBlamesTheMoveThatLostTheGameNotTheLastOne() {
+        // From level to two pawns down: a real mistake.
+        val spoiled = Review.cost(PikafishEngine.Score(cp = 0, mate = null), PikafishEngine.Score(cp = 200, mate = null))
+        // Eleven pawns down and then mated in one: the game was already gone.
+        val alreadyLost = Review.cost(PikafishEngine.Score(cp = -1140, mate = null), PikafishEngine.Score(cp = null, mate = 1))
+        assertTrue("spoiled $spoiled", spoiled > 0.15)
+        assertTrue("already lost $alreadyLost", alreadyLost < 0.02)
+        assertTrue(spoiled > alreadyLost)
     }
 }

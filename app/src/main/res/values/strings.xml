@@ -58,18 +58,17 @@
     <string name="close">关闭</string>
     <string name="review_game">复盘</string>
     <string name="analysis_title">形势走势</string>
-    <string name="analysis_hint">曲线在中线上方是红方占优，下方是黑方占优。点图上任意一处，棋盘就跳到那一步。</string>
     <string name="analysis_red">红优</string>
     <string name="analysis_black">黑优</string>
-    <string name="analysis_goto_mistake">看失误那步</string>
     <string name="analysis_unavailable">引擎没有启动，暂时无法分析</string>
     <string name="show_eval">显示形势分</string>
     <string name="hide_eval">隐藏形势分</string>
+    <string name="review_line">第%1$d回合 %2$s %3$s · %4$s</string>
+    <string name="review_start">开始局面</string>
     <string name="review_running">正在分析这一局…</string>
     <string name="review_none">这一局没有明显的失误。</string>
     <string name="review_result">第%1$d回合你走了%2$s，形势从「%3$s」变成「%4$s」。更好的是%5$s，见棋盘上的箭头。</string>
     <string name="review_result_plain">第%1$d回合你走了%2$s，形势从「%3$s」变成「%4$s」。</string>
-    <string name="review_ok">知道了</string>
 
     <!-- Toasts and snackbars -->
     <string name="not_your_turn">不是你的回合</string>

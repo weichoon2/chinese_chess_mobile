@@ -18,7 +18,8 @@ import kotlin.math.roundToInt
  * How the game went: one point per position, red's share of the game on the same logistic
  * curve as the evaluation bar (so +100 cp is about 59%, a mate pins it to the edge). Above
  * the middle line red is better, below it black. The costliest move is marked in amber and
- * the position on the board, if any, by a vertical line. Tapping picks a position.
+ * the position on the board, if any, by a vertical line. Touching picks a position, and
+ * dragging scrubs through the game, picking each position the finger passes.
  */
 class EvalGraphView @JvmOverloads constructor(
     context: Context,
@@ -178,15 +179,28 @@ class EvalGraphView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (shares.size < 2) return false
-        if (event.action == MotionEvent.ACTION_UP) {
-            val n = shares.size - 1
-            val i = (((event.x - pad) / (width - 2 * pad)) * n).roundToInt().coerceIn(0, n)
-            currentIndex = i
-            invalidate()
-            onPick?.invoke(i)
-            performClick()
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                // A sideways drag is a scrub, not a scroll of whatever holds the graph.
+                parent?.requestDisallowInterceptTouchEvent(true)
+                pickAt(event.x)
+            }
+            MotionEvent.ACTION_MOVE -> pickAt(event.x)
+            MotionEvent.ACTION_UP -> {
+                pickAt(event.x)
+                performClick()
+            }
         }
         return true
+    }
+
+    private fun pickAt(x: Float) {
+        val n = shares.size - 1
+        val i = (((x - pad) / (width - 2 * pad)) * n).roundToInt().coerceIn(0, n)
+        if (i == currentIndex) return
+        currentIndex = i
+        invalidate()
+        onPick?.invoke(i)
     }
 
     override fun performClick(): Boolean {
