@@ -293,7 +293,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:fontFamily="serif"
-            android:minWidth="64dp"
+            android:minWidth="56dp"
             android:gravity="end"
             android:text="@string/eval_even"
             android:textColor="@color/chess_text_secondary"
@@ -376,7 +376,7 @@
             android:orientation="horizontal"
             android:visibility="gone">
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/replayStartButton"
                 style="@style/Widget.Chess.ReplayButton"
                 android:layout_width="0dp"
@@ -384,7 +384,7 @@
                 android:layout_weight="1"
                 android:text="@string/replay_start" />
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/replayPrevButton"
                 style="@style/Widget.Chess.ReplayButton"
                 android:layout_width="0dp"
@@ -397,12 +397,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="monospace"
-                android:minWidth="64dp"
+                android:minWidth="56dp"
                 android:gravity="center"
                 android:textColor="@color/chess_text"
                 android:textSize="13sp" />
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/replayNextButton"
                 style="@style/Widget.Chess.ReplayButton"
                 android:layout_width="0dp"
@@ -410,7 +410,7 @@
                 android:layout_weight="1.2"
                 android:text="@string/replay_next" />
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/replayEndButton"
                 style="@style/Widget.Chess.ReplayButton"
                 android:layout_width="0dp"
@@ -418,7 +418,7 @@
                 android:layout_weight="1"
                 android:text="@string/replay_end" />
 
-            <com.google.android.material.button.MaterialButton
+            <TextView
                 android:id="@+id/replayExitButton"
                 style="@style/Widget.Chess.ReplayButton"
                 android:layout_width="0dp"

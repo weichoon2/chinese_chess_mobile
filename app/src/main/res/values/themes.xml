@@ -29,6 +29,9 @@
         <item name="android:textColorPrimary">@color/chess_text</item>
         <item name="android:textColorSecondary">@color/chess_text_secondary</item>
         <item name="android:textColorAlertDialogListItem">@color/chess_text</item>
+        <!-- AppCompat's list rows read this one, not the framework attribute above; without
+             it the item names in the level and endgame lists came out near-black. -->
+        <item name="textColorAlertDialogListItem">@color/chess_text</item>
         <item name="colorOnSurface">@color/chess_text</item>
         <item name="colorSurface">@color/chess_dialog_bg</item>
         <item name="colorAccent">@color/chess_accent</item>
@@ -61,6 +64,8 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">12sp</item>
         <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:maxLines">1</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="android:paddingTop">8dp</item>
@@ -82,16 +87,25 @@
         <item name="android:fontFamily">serif</item>
         <item name="android:textSize">16sp</item>
     </style>
-    <!-- Compact text buttons for the replay bar under the board. -->
-    <style name="Widget.Chess.ReplayButton" parent="Widget.MaterialComponents.Button.TextButton">
+    <!-- Tappable labels for the replay bar under the board. Plain text views rather than
+         buttons: a button's own padding and insets left no room in the 44dp strip, so the
+         labels wrapped onto a second line and lost their lower half. One line, shrinking
+         rather than cutting if a large font setting leaves too little width. -->
+    <style name="Widget.Chess.ReplayButton" parent="">
         <item name="android:textColor">@color/chess_accent</item>
         <item name="android:fontFamily">serif</item>
-        <item name="android:textSize">13sp</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
-        <item name="android:minWidth">0dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="autoSizeTextType">uniform</item>
+        <item name="autoSizeMinTextSize">9sp</item>
+        <item name="autoSizeMaxTextSize">14sp</item>
         <item name="android:paddingStart">2dp</item>
         <item name="android:paddingEnd">2dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
     </style>
     <!-- New game ends the game on the board, so it is drawn quieter than hint and undo:
          no fill, a hairline outline and secondary-coloured text. -->

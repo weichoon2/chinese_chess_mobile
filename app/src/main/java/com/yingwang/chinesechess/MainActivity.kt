@@ -4,6 +4,7 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -27,6 +28,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -418,7 +420,8 @@ class MainActivity : AppCompatActivity() {
         lastStats = stats
         updateScoreLines()
         gameTimeText.text = formatTime(stats.gameTime)
-        moveCountText.text = getString(R.string.round_label, stats.moveNumber)
+        // A round is a red move and the black reply, as in the move strip and the record.
+        moveCountText.text = getString(R.string.round_label, (stats.moveNumber + 1) / 2)
         updateMoveHistory()
         // Each card shows the pieces its side has taken.
         updateCapturedRow(redCapturedLayout, stats.redCapturedPieces)
@@ -936,6 +939,16 @@ class MainActivity : AppCompatActivity() {
             setText(R.string.challenge_mode)
             isChecked = challengeMode
             setTextColor(ContextCompat.getColor(this@MainActivity, R.color.chess_text))
+            // The default off state is a dark thumb on a dark track, nearly invisible on
+            // this panel; give both states colours that read on it.
+            val checked = intArrayOf(android.R.attr.state_checked)
+            val accent = ContextCompat.getColor(this@MainActivity, R.color.chess_accent)
+            val secondary = ContextCompat.getColor(this@MainActivity, R.color.chess_text_secondary)
+            thumbTintList = ColorStateList(arrayOf(checked, intArrayOf()), intArrayOf(accent, secondary))
+            trackTintList = ColorStateList(
+                arrayOf(checked, intArrayOf()),
+                intArrayOf(ColorUtils.setAlphaComponent(accent, 110), ColorUtils.setAlphaComponent(secondary, 90))
+            )
         }
         val challengeNote = TextView(this).apply {
             setText(R.string.challenge_mode_note)
@@ -1079,7 +1092,7 @@ class MainActivity : AppCompatActivity() {
         sb.appendLine(getString(R.string.export_title))
         sb.appendLine(getString(R.string.export_date, SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())))
         sb.appendLine(getString(R.string.export_mode, modeDescription()))
-        sb.appendLine(getString(R.string.export_moves, moves.size))
+        sb.appendLine(getString(R.string.export_moves, (moves.size + 1) / 2))
         sb.appendLine("─".repeat(30))
         sb.appendLine()
 
