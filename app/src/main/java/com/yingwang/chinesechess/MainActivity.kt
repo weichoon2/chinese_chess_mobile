@@ -702,8 +702,8 @@ class MainActivity : AppCompatActivity() {
                     Snackbar.make(boardView, R.string.review_none, Snackbar.LENGTH_LONG).show()
                     return@runOnUiThread
                 }
-                var before = gameController.getInitialBoard().copy()
-                for (i in 0 until mistake.index) before = before.makeMove(moves[i])
+                val before = gameController.getInitialBoard().copy()
+                for (i in 0 until mistake.index) before.makeMoveInPlace(moves[i])
                 if (!gameController.isInReplayMode()) gameController.enterReplayMode()
                 gameController.replayGoTo(mistake.index)
                 updateGameModeDisplay()

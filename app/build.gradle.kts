@@ -92,4 +92,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
+    testImplementation("junit:junit:4.13.2")
+    // Android's org.json is a stub on the JVM; the tests read the endgame data with the real one.
+    testImplementation("org.json:json:20231013")
+
 }

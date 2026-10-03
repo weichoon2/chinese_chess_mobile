@@ -811,7 +811,8 @@ class GameController(
                 val engine = ensurePikafish() ?: return@withLock null
                 // Score of each position for its side to move.
                 val positions = mutableListOf(start.copy())
-                for (m in moves) positions.add(positions.last().makeMove(m))
+                // makeMove keeps the side to move (it is for trying moves out); these need the turn to pass.
+                for (m in moves) positions.add(positions.last().copy().also { it.makeMoveInPlace(m) })
                 val scores = positions.map { pos ->
                     if (pos.isCheckmate()) PikafishEngine.Score(cp = null, mate = 0) else engine.evaluate(pos, depth = REVIEW_DEPTH)
                 }
