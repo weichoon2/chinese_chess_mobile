@@ -155,4 +155,17 @@
         <item>大师</item>
         <item>棋圣</item>
     </string-array>
+    <!-- Player titles by rating, lowest first (RatingSystem.PlayerStats.rankIndex). -->
+    <string-array name="rank_titles">
+        <item>初学</item>
+        <item>新手</item>
+        <item>棋友</item>
+        <item>高手</item>
+        <item>专家</item>
+        <item>大师</item>
+    </string-array>
+    <!-- Red's file numbers along the bottom edge of the board, left to right. -->
+    <string-array name="board_bottom_files">
+        <item>九</item><item>八</item><item>七</item><item>六</item><item>五</item><item>四</item><item>三</item><item>二</item><item>一</item>
+    </string-array>
 </resources>

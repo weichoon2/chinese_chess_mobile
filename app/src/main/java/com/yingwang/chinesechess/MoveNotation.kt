@@ -58,11 +58,48 @@ object MoveNotation {
         }
     }
 
+    private val WESTERN_LETTERS = mapOf(
+        PieceType.GENERAL to "G", PieceType.ADVISOR to "A", PieceType.ELEPHANT to "E",
+        PieceType.HORSE to "H", PieceType.CHARIOT to "R", PieceType.CANNON to "C", PieceType.SOLDIER to "S"
+    )
+
+    /**
+     * The WXF-style notation English sources use, e.g. C2=5, H8+7, R+-1: a letter for the piece,
+     * its file counted from the mover's right (or + front / - rear when two share a file), then
+     * + forward, - back or = across, and the ranks travelled or, for the diagonal movers and
+     * any sideways move, the file it lands on. The same reading as [format], spelt in Latin.
+     */
+    fun formatWestern(move: Move, boardBefore: Board): String {
+        val piece = move.piece
+        val isRed = piece.color == PieceColor.RED
+        val file = { col: Int -> if (isRed) 9 - col else col + 1 }
+        val rowDiff = move.to.row - move.from.row
+        val forward = if (isRed) rowDiff < 0 else rowDiff > 0
+        val letter = WESTERN_LETTERS.getValue(piece.type)
+
+        val sameFile = boardBefore.getAllPieces()
+            .filter { it.color == piece.color && it.type == piece.type && it.position.col == move.from.col }
+            .sortedBy { it.position.row }
+        val origin = if (sameFile.size == 2 && piece.type != PieceType.GENERAL) {
+            val idx = sameFile.indexOfFirst { it.position == move.from }
+            val front = if (isRed) idx == 0 else idx == 1
+            if (front) "+" else "-"
+        } else {
+            file(move.from.col).toString()
+        }
+
+        return when {
+            rowDiff == 0 -> "$letter$origin=${file(move.to.col)}"
+            piece.type in DIAGONAL -> "$letter$origin${if (forward) "+" else "-"}${file(move.to.col)}"
+            else -> "$letter$origin${if (forward) "+" else "-"}${abs(rowDiff)}"
+        }
+    }
+
     /** Notation for every move of a game, replayed from [initialBoard]. */
-    fun formatAll(moves: List<Move>, initialBoard: Board): List<String> {
+    fun formatAll(moves: List<Move>, initialBoard: Board, western: Boolean = false): List<String> {
         val board = initialBoard.copy()
         return moves.map { move ->
-            val text = format(move, board)
+            val text = if (western) formatWestern(move, board) else format(move, board)
             board.makeMoveInPlace(move)
             text
         }

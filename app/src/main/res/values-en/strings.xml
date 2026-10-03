@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English interface. The pieces keep their characters, as on a real board; the moves are
+     written in WXF notation (see bools_notation.xml). -->
+<resources>
+    <string name="app_name">Chinese Chess</string>
+
+    <!-- Bottom bar -->
+    <string name="new_game">New game</string>
+    <string name="hint">Hint</string>
+    <string name="undo">Undo</string>
+    <string name="more">More</string>
+
+    <!-- Header -->
+    <string name="red_side">Red</string>
+    <string name="black_side">Black</string>
+    <string name="red_short">Red</string>
+    <string name="black_short">Black</string>
+    <string name="role_player">You</string>
+    <string name="role_ai">AI</string>
+    <string name="eval_even">Even</string>
+    <string name="eval_red_better">Red +%1$s</string>
+    <string name="eval_black_better">Black +%1$s</string>
+    <string name="eval_red_mates">Red mates in %1$d</string>
+    <string name="eval_black_mates">Black mates in %1$d</string>
+    <string name="eval_red_winning">Red winning</string>
+    <string name="eval_black_winning">Black winning</string>
+    <string name="captured_label">Captured</string>
+    <string name="captured_none">No captures</string>
+    <string name="round_label">Move %1$d</string>
+    <string name="history_empty">Moves</string>
+    <string name="history_all">All ›</string>
+    <string name="history_title">Moves this game</string>
+    <string name="history_round">%1$d.  %2$s</string>
+
+    <!-- Mode captions: short for the header, long for exports -->
+    <string name="mode_pvp">2 players</string>
+    <string name="mode_pvai">vs AI · %1$s</string>
+    <string name="mode_aivai">AI vs AI</string>
+    <string name="mode_endgame">Endgame</string>
+    <string name="mode_replay">Replay</string>
+    <string name="mode_pvp_long">Player vs player</string>
+    <string name="mode_pvai_long">Player (%1$s) vs AI · %2$s</string>
+    <string name="mode_aivai_long">AI vs AI</string>
+    <string name="mode_endgame_long">Endgame practice</string>
+    <string name="mode_replay_long">Game replay</string>
+
+    <!-- Status line -->
+    <string name="side_to_move">%1$s to move</string>
+    <string name="in_check">%1$s in check!</string>
+    <string name="wins">%1$s wins!</string>
+    <string name="wins_short">%1$s wins</string>
+    <string name="draw">Draw!</string>
+    <string name="draw_short">Draw</string>
+    <string name="ai_thinking">AI thinking</string>
+    <string name="perpetual_check_loss">Perpetual check loses. %1$s wins!</string>
+    <string name="repetition_draw">Same position three times. Draw!</string>
+    <string name="rating_summary">\n\nRating: %1$s (%2$s)\nTitle: %3$s</string>
+    <string name="game_over">Game over</string>
+    <string name="play_again">Play again</string>
+    <string name="review_mistake">Review mistake</string>
+    <string name="close">Close</string>
+    <string name="level_up_suggest">Two wins in a row at this level. Try %1$s?</string>
+    <string name="level_down_suggest">Three losses in a row at this level. Practise at %1$s for a while?</string>
+    <string name="level_switch">Switch to %1$s</string>
+    <string name="review_running">Looking over the game…</string>
+    <string name="review_none">No clear mistakes in this game.</string>
+    <string name="review_result">On move %1$d you played %2$s, and the position went from %3$s to %4$s. Better was %5$s: see the arrow on the board.</string>
+    <string name="review_result_plain">On move %1$d you played %2$s, and the position went from %3$s to %4$s.</string>
+    <string name="review_ok">Got it</string>
+
+    <!-- Toasts and snackbars -->
+    <string name="not_your_turn">Not your turn</string>
+    <string name="illegal_move">Illegal move</string>
+    <string name="replay_blocked">You can\'t move during a replay</string>
+    <string name="hint_suggest">Try %1$s</string>
+    <string name="hint_unavailable">No hint available</string>
+    <string name="undo_none">Nothing to undo</string>
+    <string name="undo_done">Move taken back</string>
+    <string name="muted_toast">Sound off</string>
+    <string name="unmuted_toast">Sound on</string>
+
+    <!-- Dialogs -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="resume_title">Continue game</string>
+    <string name="resume_message">You have an unfinished game. Continue it?</string>
+    <string name="resume_continue">Continue</string>
+    <string name="undo_confirm_title">Take back</string>
+    <string name="undo_confirm_message">Take back your last move?</string>
+    <string name="mode_select_title">Choose a game</string>
+    <string name="abandon_title">Give up this game?</string>
+    <string name="abandon_message">The game on the board isn\'t finished. Starting a new one ends it.</string>
+    <string name="abandon_confirm">New game</string>
+    <string name="play_red_vs_ai">Play red, move first, vs AI</string>
+    <string name="play_black_vs_ai">Play black, move second, vs AI</string>
+    <string name="two_players">Two players</string>
+    <string name="watch_ai">AI vs AI (watch)</string>
+    <string name="endgame_practice">Endgame practice</string>
+    <string name="endgame_select_title">Choose an endgame</string>
+    <string name="endgame_item">%1$s - %2$s</string>
+    <string name="difficulty_title">AI level</string>
+    <string name="difficulty_first_title">How well do you play?</string>
+    <string name="challenge_mode">Challenge mode</string>
+    <string name="challenge_mode_note">Counts towards your rating; no hints or take-backs. Off is practice: hints and take-backs whenever you like, rating untouched.</string>
+    <string name="challenge_no_hint">No hints in challenge mode</string>
+    <string name="challenge_no_undo">No take-backs in challenge mode</string>
+    <string name="mode_challenge">Challenge · %1$s</string>
+    <string name="difficulty_restart_title">Change level</string>
+    <string name="difficulty_restart_message">Changing the level starts the game again. Go ahead?</string>
+    <string name="change_difficulty">AI level</string>
+    <string name="replay_title">Replay game</string>
+    <string name="replay_progress">Move %1$d / %2$d</string>
+    <string name="replay_next">Next ›</string>
+    <string name="replay_prev">‹ Back</string>
+    <string name="replay_start">« Start</string>
+    <string name="replay_end">End »</string>
+    <string name="replay_exit_short">Exit</string>
+    <string name="replay_counter">%1$d/%2$d</string>
+    <string name="replay_at_end">At the last move</string>
+    <string name="replay_at_start">At the first move</string>
+    <string name="replay_exited">Replay closed</string>
+    <string name="replay_none">No moves to replay</string>
+    <string name="mute">Sound off</string>
+    <string name="unmute">Sound on</string>
+    <string name="export">Export moves</string>
+    <string name="my_stats">My record</string>
+    <string name="about">About</string>
+    <string name="stats_message">Title: %1$s\nRating: %2$d\n\nGames: %3$d\nWon: %4$d  Lost: %5$d  Drawn: %6$d\nWin rate: %7$s</string>
+    <string name="export_none">No moves to export</string>
+    <string name="export_title">Chinese chess game record</string>
+    <string name="export_date">Date: %1$s</string>
+    <string name="export_mode">Mode: %1$s</string>
+    <string name="export_moves">Moves: %1$d</string>
+    <string name="export_result">Result: %1$s</string>
+    <string name="result_unfinished">Unfinished</string>
+    <string name="about_title">About Chinese Chess</string>
+    <string name="about_body">Chinese Chess %1$s\n\nThe opponent is Pikafish, the NNUE engine, running on your phone.\n\n%2$s</string>
+
+    <!-- Order matches GameController.AIDifficulty -->
+    <string-array name="difficulty_notes">
+        <item>Just learnt the moves; the AI often slips</item>
+        <item>Know the basic mates; the AI slips now and then</item>
+        <item>Played a fair bit; the AI no longer gives pieces away</item>
+        <item>A solid club player</item>
+        <item>A strong amateur</item>
+        <item>Close to professional</item>
+        <item>Very hard to beat</item>
+        <item>The engine at full strength, beyond any human</item>
+    </string-array>
+    <string-array name="difficulty_short">
+        <item>Novice</item>
+        <item>Learner</item>
+        <item>Beginner</item>
+        <item>Intermediate</item>
+        <item>Advanced</item>
+        <item>Professional</item>
+        <item>Master</item>
+        <item>Grandmaster</item>
+    </string-array>
+    <string-array name="rank_titles">
+        <item>Newcomer</item>
+        <item>Novice</item>
+        <item>Club player</item>
+        <item>Strong player</item>
+        <item>Expert</item>
+        <item>Master</item>
+    </string-array>
+    <string-array name="board_bottom_files">
+        <item>9</item><item>8</item><item>7</item><item>6</item><item>5</item><item>4</item><item>3</item><item>2</item><item>1</item>
+    </string-array>
+</resources>

@@ -40,15 +40,19 @@ object RatingSystem {
         val winRate: String
             get() = if (games > 0) "${(wins * 100.0 / games).roundToInt()}%" else "—"
 
-        val rankTitle: String
+        /** Index into R.array.rank_titles, lowest first. */
+        val rankIndex: Int
             get() = when {
-                rating >= 2000 -> "大师"
-                rating >= 1700 -> "专家"
-                rating >= 1400 -> "高手"
-                rating >= 1100 -> "棋友"
-                rating >= 800 -> "新手"
-                else -> "初学"
+                rating >= 2000 -> 5
+                rating >= 1700 -> 4
+                rating >= 1400 -> 3
+                rating >= 1100 -> 2
+                rating >= 800 -> 1
+                else -> 0
             }
+
+        var rankTitle: String = ""
+            internal set
     }
 
     fun getStats(context: Context): PlayerStats {
@@ -59,7 +63,7 @@ object RatingSystem {
             wins = prefs.getInt(KEY_WINS, 0),
             losses = prefs.getInt(KEY_LOSSES, 0),
             draws = prefs.getInt(KEY_DRAWS, 0)
-        )
+        ).also { it.rankTitle = context.resources.getStringArray(R.array.rank_titles)[it.rankIndex] }
     }
 
     /**

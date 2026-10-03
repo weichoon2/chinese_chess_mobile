@@ -252,7 +252,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (move != null) {
                         boardView.highlightMove(move)
-                        val text = MoveNotation.format(move, gameController.getCurrentBoard())
+                        val text = notation(move, gameController.getCurrentBoard())
                         Snackbar.make(boardView, getString(R.string.hint_suggest, text), 4000).show()
                     } else {
                         Snackbar.make(boardView, R.string.hint_unavailable, Snackbar.LENGTH_SHORT).show()
@@ -486,7 +486,7 @@ class MainActivity : AppCompatActivity() {
             moveHistoryText.text = getString(R.string.history_empty)
             return
         }
-        val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard())
+        val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard(), westernNotation)
         val lastRoundStart = (moves.size - 1) / 2 * 2
         val round = notations.subList(lastRoundStart, moves.size).joinToString("  ")
         moveHistoryText.text = getString(R.string.history_round, lastRoundStart / 2 + 1, round)
@@ -496,7 +496,7 @@ class MainActivity : AppCompatActivity() {
         val moves = gameController.getMoveHistory()
         if (moves.isEmpty()) return getString(R.string.history_empty)
         val history = StringBuilder()
-        val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard())
+        val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard(), westernNotation)
         moves.forEachIndexed { index, _ ->
             val moveNum = index / 2 + 1
             if (index % 2 == 0) {
@@ -696,11 +696,11 @@ class MainActivity : AppCompatActivity() {
                 boardView.showSuggestion(mistake.better)
 
                 val round = mistake.index / 2 + 1
-                val played = MoveNotation.format(mistake.played, before)
+                val played = notation(mistake.played, before)
                 val from = mistake.before?.let { evalSummary(it) } ?: "?"
                 val to = mistake.after?.let { evalSummary(it) } ?: "?"
                 val text = mistake.better?.let {
-                    getString(R.string.review_result, round, played, from, to, MoveNotation.format(it, before))
+                    getString(R.string.review_result, round, played, from, to, notation(it, before))
                 } ?: getString(R.string.review_result_plain, round, played, from, to)
                 Snackbar.make(boardView, text, Snackbar.LENGTH_INDEFINITE)
                     .setAction(R.string.review_ok) { boardView.showSuggestion(null) }
@@ -798,6 +798,12 @@ class MainActivity : AppCompatActivity() {
         updateGameModeDisplay()
         updateReplayBar()
     }
+
+    /** English uses the WXF letters (C2=5); Chinese the four-character notation (炮二平五). */
+    private val westernNotation by lazy { resources.getBoolean(R.bool.western_notation) }
+
+    private fun notation(move: com.yingwang.chinesechess.model.Move, boardBefore: com.yingwang.chinesechess.model.Board): String =
+        if (westernNotation) MoveNotation.formatWestern(move, boardBefore) else MoveNotation.format(move, boardBefore)
 
     private fun preferredDifficulty(): AIDifficulty? =
         settings.getString(KEY_DIFFICULTY, null)?.let { name -> AIDifficulty.values().firstOrNull { it.name == name } }
@@ -981,7 +987,7 @@ class MainActivity : AppCompatActivity() {
         sb.appendLine("─".repeat(30))
         sb.appendLine()
 
-        val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard())
+        val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard(), westernNotation)
         moves.forEachIndexed { index, _ ->
             val moveNum = index / 2 + 1
             if (index % 2 == 0) {

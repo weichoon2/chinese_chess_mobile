@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Move notation: four-character Chinese (炮二平五) here, WXF letters (C2=5) in values-en. -->
+    <bool name="western_notation">false</bool>
+</resources>

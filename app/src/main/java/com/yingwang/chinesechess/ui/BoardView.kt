@@ -47,7 +47,6 @@ class BoardView @JvmOverloads constructor(
         private const val MARGIN_Y = 0.8f
         const val ASPECT_HEIGHT_CELLS = 9f + 2 * MARGIN_Y
         private val TOP_FILES = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
-        private val BOTTOM_FILES = listOf("九", "八", "七", "六", "五", "四", "三", "二", "一")
     }
 
     // ── Colours ──
@@ -62,6 +61,8 @@ class BoardView @JvmOverloads constructor(
     private val frameLightColor = color(R.color.board_frame_light)
     private val riverColor = color(R.color.board_river)
     private val coordColor = color(R.color.board_coord)
+    /** Red's files along the bottom: Chinese numerals, or 9…1 where the moves are written in WXF. */
+    private val bottomFiles: Array<String> = resources.getStringArray(R.array.board_bottom_files)
     private val redInk = color(R.color.chess_piece_red_ink)
     private val blackInk = color(R.color.chess_piece_black_ink)
 
@@ -552,7 +553,7 @@ class BoardView @JvmOverloads constructor(
         for (col in 0..8) {
             val x = offsetX + col * cellSize
             c.drawText(TOP_FILES[col], x, topY, coordPaint)
-            c.drawText(BOTTOM_FILES[col], x, bottomY, coordPaint)
+            c.drawText(bottomFiles[col], x, bottomY, coordPaint)
         }
     }
 
