@@ -798,26 +798,37 @@ class GameController(
      */
     data class Mistake(val index: Int, val played: Move, val better: Move?, val before: Evaluation?, val after: Evaluation?, val delta: Int)
 
+    /** Red-side readings for every position of the game, and the player's costliest move. */
+    data class Analysis(val evals: List<Evaluation?>, val mistake: Mistake?)
+
     /**
-     * Scores every position of the game at a shallow depth and returns the player's move with
-     * the largest drop, or null when no move lost more than [MISTAKE_THRESHOLD_CP] (or the
-     * engine is unavailable). Runs off the main thread; [onDone] is called on it.
+     * Scores every position of the game at a shallow depth, for the graph of how it went,
+     * and finds the [player]'s move with the largest drop (none when no move lost more than
+     * [MISTAKE_THRESHOLD_CP], or when [player] is null). Null when the engine is unavailable.
+     * Runs off the main thread; [onDone] is called on it.
      */
-    fun findBiggestMistake(player: PieceColor, onDone: (Mistake?) -> Unit) {
+    fun analyzeGame(player: PieceColor?, onDone: (Analysis?) -> Unit) {
         val moves = moveHistory.toList()
         val start = initialBoard.copy()
         coroutineScope.launch {
-            val mistake = engineMutex.withLock {
+            val analysis = engineMutex.withLock {
                 val engine = ensurePikafish() ?: return@withLock null
-                // Score of each position for its side to move.
-                val positions = mutableListOf(start.copy())
                 // makeMove keeps the side to move (it is for trying moves out); these need the turn to pass.
+                val positions = mutableListOf(start.copy())
                 for (m in moves) positions.add(positions.last().copy().also { it.makeMoveInPlace(m) })
+                // Score of each position for its side to move.
                 val scores = positions.map { pos ->
                     if (pos.isCheckmate()) PikafishEngine.Score(cp = null, mate = 0) else engine.evaluate(pos, depth = REVIEW_DEPTH)
                 }
+                val evals = scores.mapIndexed { i, sc ->
+                    if (sc?.mate == 0) {
+                        // The side to move is mated: a decided game for the other side.
+                        Evaluation(cpRed = null, mateRed = if (positions[i].currentPlayer == PieceColor.RED) -1 else 1)
+                    } else toRedPerspective(sc, positions[i].currentPlayer)
+                }
+
                 var worst: Pair<Int, Int>? = null  // index, delta
-                for (i in moves.indices) {
+                if (player != null) for (i in moves.indices) {
                     if (moves[i].piece.color != player) continue
                     val before = scores[i] ?: continue
                     val after = scores[i + 1] ?: continue
@@ -825,19 +836,20 @@ class GameController(
                     val drop = WeakPlay.comparable(before) + WeakPlay.comparable(after)
                     if (worst == null || drop > worst.second) worst = i to drop
                 }
-                val (index, delta) = worst ?: return@withLock null
-                if (delta < MISTAKE_THRESHOLD_CP) return@withLock null
-                val better = engine.findBestMove(positions[index], depth = REVIEW_BEST_DEPTH)
-                Mistake(
-                    index = index,
-                    played = moves[index],
-                    better = better?.takeIf { it.from != moves[index].from || it.to != moves[index].to },
-                    before = toRedPerspective(scores[index], positions[index].currentPlayer),
-                    after = toRedPerspective(scores[index + 1], positions[index + 1].currentPlayer),
-                    delta = delta
-                )
+                val mistake = worst?.takeIf { it.second >= MISTAKE_THRESHOLD_CP }?.let { (index, delta) ->
+                    val better = engine.findBestMove(positions[index], depth = REVIEW_BEST_DEPTH)
+                    Mistake(
+                        index = index,
+                        played = moves[index],
+                        better = better?.takeIf { it.from != moves[index].from || it.to != moves[index].to },
+                        before = evals[index],
+                        after = evals[index + 1],
+                        delta = delta
+                    )
+                }
+                Analysis(evals, mistake)
             }
-            onDone(mistake)
+            onDone(analysis)
         }
     }
 

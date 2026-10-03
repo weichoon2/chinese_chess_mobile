@@ -39,6 +39,7 @@ import com.yingwang.chinesechess.model.Piece
 import com.yingwang.chinesechess.model.PieceColor
 import com.yingwang.chinesechess.ui.BoardView
 import com.yingwang.chinesechess.ui.EvalBarView
+import com.yingwang.chinesechess.ui.EvalGraphView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -53,8 +54,7 @@ class MainActivity : AppCompatActivity() {
         private const val MATE_HINT_LIMIT = 3
         private const val KEY_DIFFICULTY = "difficulty"
         private const val KEY_CHALLENGE = "challenge"
-        private const val KEY_STREAK_LEVEL = "streak_level"
-        private const val KEY_STREAK = "streak"
+        private const val KEY_SHOW_EVAL = "show_eval"
     }
 
     private lateinit var boardView: BoardView
@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gameModeText: TextView
     private lateinit var evalBar: EvalBarView
     private lateinit var evalText: TextView
+    private lateinit var evalRow: View
     private var evaluation: GameController.Evaluation? = null
     private var lastStats: GameController.GameStats? = null
 
@@ -188,6 +189,8 @@ class MainActivity : AppCompatActivity() {
         gameModeText = findViewById(R.id.gameModeText)
         evalBar = findViewById(R.id.evalBar)
         evalText = findViewById(R.id.evalText)
+        evalRow = findViewById(R.id.evalRow)
+        applyEvalVisibility()
         statusText = findViewById(R.id.statusText)
         aiThinkingIndicator = findViewById(R.id.aiThinkingIndicator)
         thinkingDot1 = findViewById(R.id.thinkingDot1)
@@ -631,12 +634,6 @@ class MainActivity : AppCompatActivity() {
             val sign = if (change >= 0) "+" else ""
             message.append(getString(R.string.rating_summary, stats.rating.toString(), "$sign$change", stats.rankTitle))
         }
-        val suggestion = if (vsAI) levelSuggestion(playerScore) else null
-        if (suggestion != null) {
-            val name = resources.getStringArray(R.array.difficulty_short)[suggestion.ordinal]
-            val up = suggestion.ordinal > gameController.getDifficulty().ordinal
-            message.append("\n\n").append(getString(if (up) R.string.level_up_suggest else R.string.level_down_suggest, name))
-        }
 
         val builder = AlertDialog.Builder(this, R.style.ChessDialogTheme)
             .setTitle(R.string.game_over)
@@ -645,84 +642,105 @@ class MainActivity : AppCompatActivity() {
                 gameController.startNewGame()
                 updateGameModeDisplay()
             }
-        if (vsAI && gameController.getMoveHistory().any { it.piece.color == playerColor }) {
-            builder.setNegativeButton(R.string.review_mistake) { _, _ -> reviewMistake(playerColor) }
+        if (gameController.getMoveHistory().isNotEmpty()) {
+            builder.setNegativeButton(R.string.review_game) { _, _ -> showAnalysis() }
         }
-        if (suggestion != null) {
-            val name = resources.getStringArray(R.array.difficulty_short)[suggestion.ordinal]
-            builder.setNeutralButton(getString(R.string.level_switch, name)) { _, _ -> switchLevel(suggestion) }
-        } else {
-            builder.setNeutralButton(R.string.close, null)
-        }
+        builder.setNeutralButton(R.string.close, null)
         builder.show()
     }
 
+    /** The human player in this game, if exactly one side is human. */
+    private fun humanSide(): PieceColor? =
+        if (gameController.getGameMode() == GameMode.PLAYER_VS_AI) gameController.getAIColor().opposite() else null
+
     /**
-     * Keeps a running streak at the current level: two wins in a row suggest the level above,
-     * three losses in a row the level below. A draw or a change of level starts it again.
+     * Scores the whole game and shows how it went as a graph, with the player's costliest
+     * move marked. Tapping the graph opens the replay at that position; the button below
+     * opens it at the mistake with the better move drawn.
      */
-    private fun levelSuggestion(score: Double): AIDifficulty? {
-        val level = gameController.getDifficulty()
-        var streak = if (settings.getString(KEY_STREAK_LEVEL, null) == level.name) settings.getInt(KEY_STREAK, 0) else 0
-        streak = when {
-            score >= 1.0 -> maxOf(streak, 0) + 1
-            score <= 0.0 -> minOf(streak, 0) - 1
-            else -> 0
+    private fun showAnalysis() {
+        if (gameController.getMoveHistory().isEmpty()) {
+            toast(R.string.replay_none)
+            return
         }
-        settings.edit().putString(KEY_STREAK_LEVEL, level.name).putInt(KEY_STREAK, streak).apply()
-        val levels = AIDifficulty.values()
-        return when {
-            streak >= 2 && level.ordinal < levels.size - 1 -> levels[level.ordinal + 1]
-            streak <= -3 && level.ordinal > 0 -> levels[level.ordinal - 1]
-            else -> null
-        }
-    }
-
-    private fun switchLevel(level: AIDifficulty) {
-        val mode = gameController.getGameMode()
-        val aiColor = gameController.getAIColor()
-        settings.edit().putString(KEY_DIFFICULTY, level.name).putInt(KEY_STREAK, 0).apply()
-        gameController.destroy()
-        gameController = GameController(this, level, audioManager)
-        setupGameControllerCallbacks()
-        gameController.setGameMode(mode, aiColor)
-        gameController.startNewGame()
-        updateGameModeDisplay()
-    }
-
-    /** Finds the player's costliest move, opens the replay just before it and draws the better move. */
-    private fun reviewMistake(player: PieceColor) {
         val working = Snackbar.make(boardView, R.string.review_running, Snackbar.LENGTH_INDEFINITE)
         working.show()
         val moves = gameController.getMoveHistory()
-        gameController.findBiggestMistake(player) { mistake ->
+        gameController.analyzeGame(humanSide()) { analysis ->
             runOnUiThread {
                 working.dismiss()
-                if (mistake == null) {
-                    Snackbar.make(boardView, R.string.review_none, Snackbar.LENGTH_LONG).show()
+                if (analysis == null) {
+                    Snackbar.make(boardView, R.string.analysis_unavailable, Snackbar.LENGTH_LONG).show()
                     return@runOnUiThread
                 }
-                val before = gameController.getInitialBoard().copy()
-                for (i in 0 until mistake.index) before.makeMoveInPlace(moves[i])
-                if (!gameController.isInReplayMode()) gameController.enterReplayMode()
-                gameController.replayGoTo(mistake.index)
-                updateGameModeDisplay()
-                updateReplayBar()
-                boardView.showSuggestion(mistake.better)
-
-                val round = mistake.index / 2 + 1
-                val played = notation(mistake.played, before)
-                val from = mistake.before?.let { evalSummary(it) } ?: "?"
-                val to = mistake.after?.let { evalSummary(it) } ?: "?"
-                val text = mistake.better?.let {
-                    getString(R.string.review_result, round, played, from, to, notation(it, before))
-                } ?: getString(R.string.review_result_plain, round, played, from, to)
-                Snackbar.make(boardView, text, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.review_ok) { boardView.showSuggestion(null) }
-                    .setTextMaxLines(5)
-                    .show()
+                val dp = resources.displayMetrics.density
+                val graph = EvalGraphView(this).apply {
+                    setData(
+                        analysis.evals.map { e -> e?.let { it.cpRed to it.mateRed } },
+                        analysis.mistake?.index,
+                        if (gameController.isInReplayMode()) gameController.getReplayIndex() else null
+                    )
+                }
+                val summary = TextView(this).apply {
+                    textSize = 13f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.chess_text_secondary))
+                    text = buildString {
+                        append(getString(R.string.analysis_hint))
+                        analysis.mistake?.let { m -> append("\n\n").append(mistakeText(m, moves)) }
+                            ?: if (humanSide() != null) append("\n\n").append(getString(R.string.review_none)) else Unit
+                    }
+                }
+                val content = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding((20 * dp).toInt(), (4 * dp).toInt(), (20 * dp).toInt(), 0)
+                    addView(graph, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (160 * dp).toInt()))
+                    addView(summary, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                        topMargin = (12 * dp).toInt()
+                    })
+                }
+                val builder = AlertDialog.Builder(this, R.style.ChessDialogTheme)
+                    .setTitle(R.string.analysis_title)
+                    .setView(content)
+                    .setNeutralButton(R.string.close, null)
+                analysis.mistake?.let { m ->
+                    builder.setPositiveButton(R.string.analysis_goto_mistake) { _, _ -> openMistake(m, moves) }
+                }
+                val dialog = builder.show()
+                graph.setOnPickListener { index ->
+                    dialog.dismiss()
+                    openReplayAt(index)
+                }
             }
         }
+    }
+
+    private fun mistakeText(m: GameController.Mistake, moves: List<com.yingwang.chinesechess.model.Move>): String {
+        val before = gameController.getInitialBoard().copy()
+        for (i in 0 until m.index) before.makeMoveInPlace(moves[i])
+        val round = m.index / 2 + 1
+        val played = notation(m.played, before)
+        val from = m.before?.let { evalSummary(it) } ?: "?"
+        val to = m.after?.let { evalSummary(it) } ?: "?"
+        return m.better?.let { getString(R.string.review_result, round, played, from, to, notation(it, before)) }
+            ?: getString(R.string.review_result_plain, round, played, from, to)
+    }
+
+    private fun openReplayAt(index: Int) {
+        if (!gameController.isInReplayMode()) gameController.enterReplayMode()
+        boardView.showSuggestion(null)
+        gameController.replayGoTo(index)
+        updateGameModeDisplay()
+        updateReplayBar()
+    }
+
+    /** The replay just before the mistake, with the better move drawn as an arrow. */
+    private fun openMistake(m: GameController.Mistake, moves: List<com.yingwang.chinesechess.model.Move>) {
+        openReplayAt(m.index)
+        boardView.showSuggestion(m.better)
+        Snackbar.make(boardView, mistakeText(m, moves), Snackbar.LENGTH_INDEFINITE)
+            .setAction(R.string.review_ok) { boardView.showSuggestion(null) }
+            .setTextMaxLines(5)
+            .show()
     }
 
     // ── Dialogs ──
@@ -867,6 +885,18 @@ class MainActivity : AppCompatActivity() {
     private fun notation(move: com.yingwang.chinesechess.model.Move, boardBefore: com.yingwang.chinesechess.model.Board): String =
         if (westernNotation) MoveNotation.formatWestern(move, boardBefore) else MoveNotation.format(move, boardBefore)
 
+    /** The running evaluation is hidden unless the player asks for it: it gives too much away. */
+    private val showEval: Boolean get() = settings.getBoolean(KEY_SHOW_EVAL, false)
+
+    private fun applyEvalVisibility() {
+        evalRow.visibility = if (showEval) View.VISIBLE else View.GONE
+    }
+
+    private fun toggleEval() {
+        settings.edit().putBoolean(KEY_SHOW_EVAL, !showEval).apply()
+        applyEvalVisibility()
+    }
+
     private fun preferredDifficulty(): AIDifficulty? =
         settings.getString(KEY_DIFFICULTY, null)?.let { name -> AIDifficulty.values().firstOrNull { it.name == name } }
 
@@ -979,9 +1009,11 @@ class MainActivity : AppCompatActivity() {
         val items = arrayOf(
             getString(if (isMuted) R.string.unmute else R.string.mute),
             getString(R.string.change_difficulty),
+            getString(if (showEval) R.string.hide_eval else R.string.show_eval),
+            getString(R.string.analysis_title),
+            getString(R.string.replay_title),
             getString(R.string.export),
             getString(R.string.my_stats),
-            getString(R.string.replay_title),
             getString(R.string.about)
         )
 
@@ -991,10 +1023,12 @@ class MainActivity : AppCompatActivity() {
                 when (which) {
                     0 -> toggleMute()
                     1 -> changeDifficulty()
-                    2 -> exportMoveHistory()
-                    3 -> showStatsDialog()
+                    2 -> toggleEval()
+                    3 -> showAnalysis()
                     4 -> toggleReplay()
-                    5 -> showAboutDialog()
+                    5 -> exportMoveHistory()
+                    6 -> showStatsDialog()
+                    7 -> showAboutDialog()
                 }
             }
             .show()
