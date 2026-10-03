@@ -1,20 +1,51 @@
 [
  {
-  "id": "dpxq-41986",
-  "name": "042黄鹂出谷",
-  "source": "《梦入神机》",
-  "fen": "5kc1c/1C2P4/b4N3/4P4/9/9/9/9/4p3r/2RK5 w - - 0 1",
+  "id": "jzm-096",
+  "name": "双兵破单缺象",
+  "source": "《橘中秘》第96局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_41691.html",
+  "fen": "3ak4/4aPP2/b8/9/9/9/9/9/9/4K4 w - - 0 1",
   "mate_in": 2,
   "solution": [
-   "c0c9",
-   "g9c9",
-   "f7h8"
-  ]
+   "g8g9",
+   "a7c9",
+   "g9f9"
+  ],
+  "group": "easy"
  },
  {
-  "id": "dpxq-41945",
-  "name": "001由中应外",
-  "source": "《梦入神机》",
+  "id": "jzm-084",
+  "name": "炮双兵胜双象",
+  "source": "《橘中秘》第84局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_41714.html",
+  "fen": "2b1C1b2/3PP4/3k5/9/9/9/9/9/9/5K3 w - - 0 1",
+  "mate_in": 2,
+  "solution": [
+   "f0e0",
+   "g9e7",
+   "e9d9"
+  ],
+  "group": "easy"
+ },
+ {
+  "id": "lksj-42373",
+  "name": "善阵善战",
+  "source": "《烂柯神机》",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42373.html",
+  "fen": "3k5/6R1C/3c5/6N2/6b2/9/9/9/2r1p1p2/5K3 w - - 0 1",
+  "mate_in": 2,
+  "solution": [
+   "g6f8",
+   "d9e9",
+   "g8g9"
+  ],
+  "group": "easy"
+ },
+ {
+  "id": "mrsj-001",
+  "name": "由中应外",
+  "source": "《梦入神机》第1局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_41945.html",
   "fen": "1RN1k4/3P3rC/6n2/9/9/9/9/4p4/3p5/c1rAK4 w - - 0 1",
   "mate_in": 3,
   "solution": [
@@ -23,26 +54,14 @@
    "e8e9",
    "f9e9",
    "c9d7"
-  ]
+  ],
+  "group": "easy"
  },
  {
-  "id": "dpxq-41946",
-  "name": "002弋不射宿",
-  "source": "《梦入神机》",
-  "fen": "3akab2/Rc1Pn4/7C1/6pN1/1r7/9/9/9/2pC5/3K2B1r w - - 0 1",
-  "mate_in": 3,
-  "solution": [
-   "h7e7",
-   "e8g7",
-   "h6g8",
-   "b8g8",
-   "d8e8"
-  ]
- },
- {
-  "id": "dpxq-41947",
-  "name": "003存没无累",
-  "source": "《梦入神机》",
+  "id": "mrsj-003",
+  "name": "存没无累",
+  "source": "《梦入神机》第3局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_41947.html",
   "fen": "2RNk4/9/1N7/9/1n7/9/C7r/9/2c1p4/2c2K3 w - - 0 1",
   "mate_in": 3,
   "solution": [
@@ -51,38 +70,561 @@
    "a3a9",
    "c9c8",
    "b7c9"
-  ]
+  ],
+  "group": "easy"
  },
  {
-  "id": "dpxq-41948",
-  "name": "004诱虎夺穴",
-  "source": "《梦入神机》",
-  "fen": "r2ak1b1r/3RaR3/1C2c3b/1P7/6p2/9/9/3C5/p3p4/3K5 w - - 0 1",
-  "mate_in": 4,
+  "id": "sqyq-013",
+  "name": "目视横流",
+  "source": "《适情雅趣》第13局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42821.html",
+  "fen": "4k4/3P2P2/b2N2R2/7r1/2b6/9/9/3n5/4p3r/2R2K3 w - - 0 1",
+  "mate_in": 3,
   "solution": [
-   "d2d7",
-   "e8d7",
+   "g7e7",
+   "c5e7",
+   "d8e8",
+   "e9e8",
+   "c0c8"
+  ],
+  "group": "easy"
+ },
+ {
+  "id": "sqyq-066",
+  "name": "见危致命",
+  "source": "《适情雅趣》第66局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42874.html",
+  "fen": "1rbak3r/1N1Ra4/cR2b1N2/9/9/9/9/9/5p3/4K4 w - - 0 1",
+  "mate_in": 3,
+  "solution": [
+   "d8d9",
+   "e8d9",
    "b7e7",
-   "e1e0",
-   "d0e0",
-   "i9h9",
-   "d8e8"
-  ]
+   "c9e7",
+   "b8d7"
+  ],
+  "group": "easy"
  },
  {
-  "id": "dpxq-41954",
-  "name": "010泄水拿鱼",
-  "source": "《梦入神机》",
-  "fen": "3a2b2/9/3k1a3/2N3NR1/2b1C4/7R1/9/2n4C1/3rAr3/c3K4 w - - 0 1",
+  "id": "sqyq-192",
+  "name": "两地关心",
+  "source": "《适情雅趣》第192局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42904.html",
+  "fen": "2bak3C/4aP2N/4b4/5C3/9/9/9/3p5/4p2r1/3K5 w - - 0 1",
+  "mate_in": 3,
+  "solution": [
+   "i8g9",
+   "e8f9",
+   "f6e6",
+   "e7g5",
+   "g9h7"
+  ],
+  "group": "easy"
+ },
+ {
+  "id": "lksj-42520",
+  "name": "运实于虚",
+  "source": "《烂柯神机》",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42520.html",
+  "fen": "4ka3/3Pn4/5R3/5N3/9/9/1r1n5/9/4p4/3K5 w - - 0 1",
+  "mate_in": 3,
+  "solution": [
+   "d8d9",
+   "e9d9",
+   "f7d7",
+   "d9e9",
+   "f6g8"
+  ],
+  "group": "easy"
+ },
+ {
+  "id": "sqyq-265",
+  "name": "入穴取虎",
+  "source": "《适情雅趣》第265局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42977.html",
+  "fen": "3k1a3/9/3a5/3rRN2C/9/9/9/6n2/5r3/4K4 w - - 0 1",
   "mate_in": 4,
   "solution": [
-   "g6f8",
-   "d9e8",
-   "h4d4",
-   "c2d4",
-   "h6d6",
+   "e6e9",
+   "d9d8",
+   "e9d9",
+   "d8d9",
+   "i6d6",
+   "d7e8",
+   "f6d7"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "sqyq-084",
+  "name": "双蜓点水",
+  "source": "《适情雅趣》第84局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42892.html",
+  "fen": "1C3k3/1N2P4/1nN1b4/9/9/9/9/4p4/3p1p3/4K4 w - - 0 1",
+  "mate_in": 4,
+  "solution": [
+   "c7d9",
+   "e7c9",
+   "e8f8",
+   "f9e9",
+   "d9c7",
+   "c9e7",
+   "b8d7"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "lksj-42472",
+  "name": "直捣中坚",
+  "source": "《烂柯神机》",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42472.html",
+  "fen": "9/4k4/9/4P4/4N4/9/9/8C/2p1p4/3K5 w - - 0 1",
+  "mate_in": 4,
+  "solution": [
+   "e6e7",
+   "e8f8",
+   "e5g6",
+   "f8f9",
+   "g6h8",
+   "f9e9",
+   "i2e2"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "mrsj-012",
+  "name": "舍身无二",
+  "source": "《梦入神机》第12局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_41956.html",
+  "fen": "3N1a3/3k5/4R4/1n4r2/R8/9/9/9/3p1r3/C3K4 w - - 0 1",
+  "mate_in": 4,
+  "solution": [
+   "a5d5",
+   "b6d5",
+   "e7d7",
+   "d8d7",
+   "d9b8",
+   "d7d8",
+   "a0a8"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "sqyq-075",
+  "name": "豪帅心服",
+  "source": "《适情雅趣》第75局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42883.html",
+  "fen": "4rc3/4ak3/9/9/9/9/9/2R6/3pA4/cr1AKC3 w - - 0 1",
+  "mate_in": 5,
+  "solution": [
+   "c2f2",
+   "e8f7",
+   "f2e2",
+   "f7e8",
+   "e1f2",
+   "e8f7",
+   "e2e8",
+   "e9e8",
+   "f2e1"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "sqyq-264",
+  "name": "巅峰得路",
+  "source": "《适情雅趣》第264局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42976.html",
+  "fen": "2b1k4/2P6/3Rn1P2/9/4r4/9/9/3R5/4r4/3K5 w - - 0 1",
+  "mate_in": 5,
+  "solution": [
    "d7e7",
-   "h2h7"
-  ]
+   "c9e7",
+   "d2d9",
+   "e9e8",
+   "c8d8",
+   "e8f8",
+   "g7g8",
+   "f8f7",
+   "d9f9"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "tlyj-136",
+  "name": "二鬼把门",
+  "source": "《韬略元机》第136局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_43770.html",
+  "fen": "2ra5/4ak3/C3P2c1/1C4P2/7R1/8r/9/9/3p1p3/4K4 w - - 0 1",
+  "mate_in": 5,
+  "solution": [
+   "h5f5",
+   "h7f7",
+   "e7f7",
+   "e8f7",
+   "b6f6",
+   "f7e8",
+   "a7f7",
+   "f8f7",
+   "f6f1"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "lksj-42381",
+  "name": "圆转如意",
+  "source": "《烂柯神机》",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42381.html",
+  "fen": "3ck4/2PR5/9/6N2/4p4/9/6R2/9/r3p4/5K3 w - - 0 1",
+  "mate_in": 5,
+  "solution": [
+   "d8d9",
+   "e9d9",
+   "g6f8",
+   "d9e9",
+   "f8d7",
+   "e9e8",
+   "d7c9",
+   "e8e9",
+   "g3g9"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "sqyq-252",
+  "name": "二龙绕室",
+  "source": "《适情雅趣》第252局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42964.html",
+  "fen": "3a1kb2/4a4/4b4/5NN2/9/9/9/8C/3r4c/4K1n2 w - - 0 1",
+  "mate_in": 6,
+  "solution": [
+   "g6h8",
+   "f9e9",
+   "f6g8",
+   "e9f9",
+   "g8e7",
+   "f9e9",
+   "e7g8",
+   "e9f9",
+   "g8h6",
+   "f9e9",
+   "h6f7"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "sqyq-400",
+  "name": "双马饮泉",
+  "source": "《适情雅趣》第400局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_43117.html",
+  "fen": "4kab2/3Pa4/4b4/1N1N5/9/9/5p3/4B3n/3p4p/5K2c w - - 0 1",
+  "mate_in": 6,
+  "solution": [
+   "b6d7",
+   "i1h1",
+   "d8d9",
+   "e9d9",
+   "d7b8",
+   "d9e9",
+   "d6c8",
+   "e9d9",
+   "c8e7",
+   "d9d8",
+   "e7c6"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "lksj-42367",
+  "name": "反覆驰骤",
+  "source": "《烂柯神机》",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42367.html",
+  "fen": "4k4/4a1P2/5a3/9/9/9/9/4p4/3p1p2R/2p1K1pR1 w - - 0 1",
+  "mate_in": 6,
+  "solution": [
+   "h0h9",
+   "e8f9",
+   "h9f9",
+   "e9e8",
+   "f9f8",
+   "e8e7",
+   "f8f7",
+   "e7e8",
+   "f7f8",
+   "e8e7",
+   "i1i7"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "tlyj-129",
+  "name": "坐镇边陲",
+  "source": "《韬略元机》第129局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_43763.html",
+  "fen": "9/4ak3/3a5/6P2/9/8R/3r5/2n3r2/C8/4K1p2 w - - 0 1",
+  "mate_in": 6,
+  "solution": [
+   "i4f4",
+   "e8f7",
+   "f4f7",
+   "f8f7",
+   "g6f6",
+   "f7f8",
+   "a1f1",
+   "d3f3",
+   "f6f7",
+   "f8f9",
+   "f7f8"
+  ],
+  "group": "medium"
+ },
+ {
+  "id": "mrsj-072",
+  "name": "塞马嘶群",
+  "source": "《梦入神机》第72局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42016.html",
+  "fen": "3ak4/2r1nP3/2N5N/9/9/9/9/9/1r1p5/4K3R w - - 0 1",
+  "mate_in": 7,
+  "solution": [
+   "f8f9",
+   "e9f9",
+   "i0f0",
+   "e8f6",
+   "f0f6",
+   "c8f8",
+   "f6f8",
+   "f9f8",
+   "i7g6",
+   "f8f9",
+   "g6h8",
+   "f9f8",
+   "c7d9"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "sqyq-291",
+  "name": "丹山起凤",
+  "source": "《适情雅趣》第291局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_43273.html",
+  "fen": "r1P1k4/5P3/9/1c7/9/2N6/9/9/2p3p2/1p1KCN1rc w - - 0 1",
+  "mate_in": 7,
+  "solution": [
+   "c4e3",
+   "b6e6",
+   "e3c2",
+   "e6b6",
+   "c2e1",
+   "b6e6",
+   "e1g0",
+   "e6b6",
+   "f0e2",
+   "b6e6",
+   "e2f4",
+   "e6a6",
+   "f4e6"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "tlyj-173",
+  "name": "铁骑追风",
+  "source": "《韬略元机》第173局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_43807.html",
+  "fen": "5ab2/3ka4/1NP4cb/9/9/9/p8/4K4/6p2/9 w - - 0 1",
+  "mate_in": 8,
+  "solution": [
+   "c7c8",
+   "d8d9",
+   "c8c9",
+   "d9e9",
+   "b7d6",
+   "h7h8",
+   "d6f7",
+   "h8f8",
+   "f7h6",
+   "a3b3",
+   "h6g8",
+   "g1f1",
+   "g8f6",
+   "b3c3",
+   "f6d7"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "lksj-42376",
+  "name": "四面楚歌",
+  "source": "《烂柯神机》",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42376.html",
+  "fen": "1n1k4C/2NcR4/4b3N/9/6b2/9/C1r6/9/4p1p2/5K3 w - - 0 1",
+  "mate_in": 8,
+  "solution": [
+   "i7h9",
+   "e7g9",
+   "h9g7",
+   "g9i7",
+   "a3a9",
+   "b9a7",
+   "g7f9",
+   "i7g9",
+   "f9d8",
+   "g9e7",
+   "e8e9",
+   "d9d8",
+   "a9a8",
+   "d8d7",
+   "e9d9"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "sqyq-014",
+  "name": "独鹿鸣泽",
+  "source": "《适情雅趣》第14局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42822.html",
+  "fen": "C3k4/4a1r2/5a3/1N7/1Cp6/1R7/9/3p5/4p3r/3K5 w - - 0 1",
+  "mate_in": 8,
+  "solution": [
+   "b6d7",
+   "e8d7",
+   "b5b9",
+   "e9e8",
+   "b4b8",
+   "e8e7",
+   "a9a7",
+   "d7e8",
+   "b8b7",
+   "e8d7",
+   "b7b0",
+   "e7e8",
+   "b0b8",
+   "e8e9",
+   "a7a9"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "sqyq-188",
+  "name": "载沉载浮",
+  "source": "《适情雅趣》第188局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_43093.html",
+  "fen": "2bak3C/4a4/2P1b4/6RR1/9/9/9/9/c1nr1p3/4K4 w - - 0 1",
+  "mate_in": 9,
+  "solution": [
+   "g6g9",
+   "e8f9",
+   "g9g8",
+   "f9e8",
+   "h6h9",
+   "e8f9",
+   "g8e8",
+   "d9e8",
+   "h9h8",
+   "e7g9",
+   "h8e8",
+   "e9d9",
+   "e8e9",
+   "d9d8",
+   "c7c8",
+   "d8d7",
+   "e9d9"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "sqyq-221",
+  "name": "野马舞风",
+  "source": "《适情雅趣》第221局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42933.html",
+  "fen": "R4a1C1/3ka4/8b/7N1/6b2/1r7/9/2C6/4p3r/c4K3 w - - 0 1",
+  "mate_in": 10,
+  "solution": [
+   "a9a8",
+   "d8d7",
+   "a8a7",
+   "d7d8",
+   "h9h8",
+   "e8f7",
+   "h6g8",
+   "f7e8",
+   "a7d7",
+   "d8d7",
+   "g8f6",
+   "d7e7",
+   "f6d5",
+   "e7d7",
+   "c2d2",
+   "b4d4",
+   "d5f6",
+   "d7e7",
+   "f6g8"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "mrsj-112",
+  "name": "双燕争飞",
+  "source": "《梦入神机》第112局",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42056.html",
+  "fen": "1P1ak3r/4a4/9/6N2/6N2/9/9/C8/3p1p1n1/4K4 w - - 0 1",
+  "mate_in": 11,
+  "solution": [
+   "a2e2",
+   "e8f7",
+   "g6e7",
+   "d9e8",
+   "g5f7",
+   "e9f9",
+   "f7h8",
+   "f9e9",
+   "e7c6",
+   "e8d9",
+   "c6e5",
+   "d9e8",
+   "h8f7",
+   "e9f9",
+   "e2f2",
+   "h1f2",
+   "f7h8",
+   "f9e9",
+   "e5f7",
+   "e9d9",
+   "b9c9"
+  ],
+  "group": "hard"
+ },
+ {
+  "id": "lksj-42365",
+  "name": "双狮滚球",
+  "source": "《烂柯神机》",
+  "source_url": "http://www.dpxq.com/hldcg/search/view_u_42365.html",
+  "fen": "4ka1r1/5nN2/b3b4/5N3/9/9/9/4cp3/1CR2pr2/2p1K3c w - - 0 1",
+  "mate_in": 12,
+  "solution": [
+   "f6d7",
+   "e9d9",
+   "d7b8",
+   "d9e9",
+   "c1c9",
+   "e7c9",
+   "b8d7",
+   "e9e8",
+   "g8f6",
+   "e8d8",
+   "b1d1",
+   "e2d2",
+   "d7f8",
+   "d2a2",
+   "f8d7",
+   "a2d2",
+   "d7b8",
+   "d2c2",
+   "b8c6",
+   "d8d9",
+   "f6d7",
+   "c2d2",
+   "d7b8"
+  ],
+  "group": "hard"
  }
 ]
