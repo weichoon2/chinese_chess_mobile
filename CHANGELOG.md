@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1] - 2026-10-03
+
+### Changed
+- The review is a panel under the board instead of a dialog: drag along the graph to step through the game, or use the replay buttons; a line above the graph says what was played and how the position stood. The better move and its explanation show only at the mistake
+- The mistake is the move that lost the most of the player's winning chances, not the most centipawns, so moves played after the game was already lost are no longer picked
+
+### Fixed
+- A replayed position kept the last-move marks at the start and a piece selected before the replay
+- The suggestion arrow and the mistake note stayed on screen while stepping through other moves
+
 ## [2.4.0] - 2026-10-03
 
 ### Added
