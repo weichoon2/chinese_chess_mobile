@@ -24,10 +24,10 @@ A feature-rich Chinese Chess (Xiangqi) game for Android with a strong AI engine,
 ## Features / 功能
 
 ### Game Modes / 游戏模式
-- **Player vs AI / 人机对弈** — 6 difficulty levels powered by the Pikafish engine / 6 个难度级别，Pikafish 引擎驱动
+- **Player vs AI / 人机对弈** — 8 difficulty levels powered by the Pikafish engine / 8 个难度级别，Pikafish 引擎驱动
 - **Player vs Player / 双人对弈** — Same-device local multiplayer / 同设备本地双人
 - **AI vs AI / AI 对弈** — Watch the engine play itself / 观看 AI 自我对弈
-- **Endgame Puzzles / 残局练习** — 8 classic positions / 8 个经典残局 (重炮杀, 铁门栓, 天地炮, 马后炮, etc.)
+- **Endgame Puzzles / 残局练习** — 30 studies taken unaltered from the classical manuals / 30 道古谱原局（适情雅趣、烂柯神机、梦入神机等），see [ENDGAMES.md](ENDGAMES.md)
 
 ### AI Engine / AI 引擎 — Pikafish
 
@@ -43,16 +43,18 @@ The engine runs as a native ARM64 binary on device, communicating via UCI protoc
 
 | Level / 级别 | Engine setting / 引擎设置 |
 |-------|-------------|
-| Beginner / 初级 | depth 3 / 3 层 |
+| Novice / 新手 | depth 4, weighted draw among the 6 best moves / 4 层，在最好的 6 步里按分数抽一步 |
+| Learner / 入门 | depth 4, the same draw held closer to the best / 4 层，同样抽签但更靠近最好的一步 |
+| Beginner / 初级 (default / 默认) | depth 3 / 3 层 |
 | Intermediate / 中级 | depth 6 / 6 层 |
 | Advanced / 高级 | depth 10 / 10 层 |
-| Professional / 专业 (default / 默认) | depth 15 / 15 层 |
+| Professional / 专业 | depth 15 / 15 层 |
 | Master / 大师 | depth 20 / 20 层 |
 | Grandmaster / 棋圣 | 10 s per move / 每步 10 秒 |
 
-A level changes only how far the engine searches: there is no skill limiter and no deliberate randomness, so even Beginner plays the engine's own best move at that depth. No Elo has been measured for these levels; the rating ladder in the app scores games against its own nominal AI ratings (800 to 2300).
+Pikafish has no skill limiter, so Novice and Learner ask it for its six best moves and draw one, weighted by score; they never miss a mate or walk into one, and in 30 calibration games each they beat Beginner 0% and 13% of the time. From Beginner up a level changes only how far the engine searches, so Beginner plays the engine's own best move at depth 3. No Elo has been measured for these levels; the rating ladder in the app scores challenge games against its own nominal AI ratings (300 to 2300).
 
-难度只改变引擎往下算多深，没有限制棋力的选项，也没有故意走随机着，所以初级走的也是引擎在那个深度上认为最好的一步。各档没有实测过等级分；应用里的积分天梯按它自己设定的 AI 分值（800 到 2300）计分。
+Pikafish 没有限制棋力的选项，所以新手和入门两档让它给出最好的 6 步，再按分数抽一步走；该杀的棋不会放过，也不会走进对方的杀局。各对初级下 30 局校准，胜率分别是 0% 和 13%。初级往上，难度只改变引擎往下算多深，所以初级走的是引擎在 3 层上认为最好的一步。各档没有实测过等级分；应用里的积分天梯只给挑战模式计分，按它自己设定的 AI 分值（300 到 2300）计算。
 
 ### User Interface / 用户界面
 
@@ -137,7 +139,7 @@ app/src/main/java/com/yingwang/chinesechess/
 ├── audio/
 │   └── GameAudioManager.kt   # Sound effects / 音效
 ├── GameController.kt         # Game flow / 游戏流程控制
-├── EndgamePositions.kt       # Endgame puzzles / 残局练习
+├── EndgameStudies.kt         # Endgame studies from assets/endgames.json / 残局练习
 ├── SoundManager.kt           # Fallback tone generator / 备用音调生成
 └── MainActivity.kt           # UI wiring / UI 绑定
 ```

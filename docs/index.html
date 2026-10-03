@@ -256,12 +256,12 @@
         <div class="feature-card">
             <div class="icon">&#x265E;</div>
             <h3>Pikafish Engine</h3>
-            <p>Pikafish, a leading xiangqi engine with NNUE evaluation, runs on the phone itself. Six levels, from depth 3 at Beginner to depth 20 at Master; Grandmaster thinks ten seconds a move.</p>
+            <p>Pikafish, a leading xiangqi engine with NNUE evaluation, runs on the phone itself. Eight levels: Novice and Learner, for people who have just learnt the moves, draw among the engine's best few moves; from Beginner up the search runs from depth 3 to depth 20, and Grandmaster thinks ten seconds a move.</p>
         </div>
         <div class="feature-card">
             <div class="icon">&#x1F3AF;</div>
             <h3>Endgame Puzzles</h3>
-            <p>8 classic endgame positions: Double Cannon, Iron Door Bolt, Heaven-Earth Cannons, Horse-Rear Cannon, and more.</p>
+            <p>30 studies taken unaltered from the classical manuals, mates in 2 to 12, each checked by the engine. Retry, or step through the solution.</p>
         </div>
         <div class="feature-card">
             <div class="icon">&#x1F4A1;</div>
@@ -281,7 +281,7 @@
         <div class="feature-card">
             <div class="icon">&#x1F4D6;</div>
             <h3>Game Replay</h3>
-            <p>Step through your game move by move. Review your strategy and learn from your decisions.</p>
+            <p>Step through your game from a bar under the board, or review it as a graph of how the position went, with your costliest move and the better one marked.</p>
         </div>
     </div>
 </section>
@@ -292,10 +292,12 @@
     <h2>AI Difficulty Levels</h2>
     <table>
         <tr><th>Level</th><th>Engine setting</th></tr>
-        <tr><td>Beginner</td><td>Depth 3</td></tr>
+        <tr><td>Novice</td><td>Depth 4, a weighted draw among the six best moves</td></tr>
+        <tr><td>Learner</td><td>Depth 4, the same draw held closer to the best move</td></tr>
+        <tr><td>Beginner (default)</td><td>Depth 3</td></tr>
         <tr><td>Intermediate</td><td>Depth 6</td></tr>
         <tr><td>Advanced</td><td>Depth 10</td></tr>
-        <tr><td>Professional (default)</td><td>Depth 15</td></tr>
+        <tr><td>Professional</td><td>Depth 15</td></tr>
         <tr><td>Master</td><td>Depth 20</td></tr>
         <tr><td>Grandmaster</td><td>10 seconds a move</td></tr>
     </table>
@@ -305,16 +307,38 @@
 
 <section>
     <h2>Endgame Puzzles</h2>
-    <p style="color:#a09080; margin-bottom:12px;">Classic Chinese chess endgame positions to practice tactical skills.</p>
+    <p style="color:#a09080; margin-bottom:12px;">Thirty positions from the classical manuals, red to move and mate. Sources and checks: ENDGAMES.md in the repository.</p>
     <div class="endgame-grid">
-        <div class="endgame-item"><strong>重炮杀</strong><br><span>Double Cannon Checkmate</span></div>
-        <div class="endgame-item"><strong>铁门栓</strong><br><span>Iron Door Bolt</span></div>
-        <div class="endgame-item"><strong>天地炮</strong><br><span>Heaven-Earth Cannons</span></div>
-        <div class="endgame-item"><strong>马后炮</strong><br><span>Horse-Rear Cannon</span></div>
-        <div class="endgame-item"><strong>双车错</strong><br><span>Double Chariot Interlock</span></div>
-        <div class="endgame-item"><strong>车马冷着</strong><br><span>Chariot-Horse Cold Move</span></div>
-        <div class="endgame-item"><strong>大胆穿心</strong><br><span>Bold Heart Pierce</span></div>
-        <div class="endgame-item"><strong>卧槽马</strong><br><span>Crouching Horse</span></div>
+        <div class="endgame-item"><strong>炮双兵胜双象</strong><br><span>Mate in 2 · 《橘中秘》第84局</span></div>
+        <div class="endgame-item"><strong>双兵破单缺象</strong><br><span>Mate in 2 · 《橘中秘》第96局</span></div>
+        <div class="endgame-item"><strong>善阵善战</strong><br><span>Mate in 2 · 《烂柯神机》</span></div>
+        <div class="endgame-item"><strong>运实于虚</strong><br><span>Mate in 3 · 《烂柯神机》</span></div>
+        <div class="endgame-item"><strong>由中应外</strong><br><span>Mate in 3 · 《梦入神机》第1局</span></div>
+        <div class="endgame-item"><strong>存没无累</strong><br><span>Mate in 3 · 《梦入神机》第3局</span></div>
+        <div class="endgame-item"><strong>目视横流</strong><br><span>Mate in 3 · 《适情雅趣》第13局</span></div>
+        <div class="endgame-item"><strong>见危致命</strong><br><span>Mate in 3 · 《适情雅趣》第66局</span></div>
+        <div class="endgame-item"><strong>两地关心</strong><br><span>Mate in 3 · 《适情雅趣》第192局</span></div>
+        <div class="endgame-item"><strong>直捣中坚</strong><br><span>Mate in 4 · 《烂柯神机》</span></div>
+        <div class="endgame-item"><strong>舍身无二</strong><br><span>Mate in 4 · 《梦入神机》第12局</span></div>
+        <div class="endgame-item"><strong>双蜓点水</strong><br><span>Mate in 4 · 《适情雅趣》第84局</span></div>
+        <div class="endgame-item"><strong>入穴取虎</strong><br><span>Mate in 4 · 《适情雅趣》第265局</span></div>
+        <div class="endgame-item"><strong>圆转如意</strong><br><span>Mate in 5 · 《烂柯神机》</span></div>
+        <div class="endgame-item"><strong>豪帅心服</strong><br><span>Mate in 5 · 《适情雅趣》第75局</span></div>
+        <div class="endgame-item"><strong>巅峰得路</strong><br><span>Mate in 5 · 《适情雅趣》第264局</span></div>
+        <div class="endgame-item"><strong>二鬼把门</strong><br><span>Mate in 5 · 《韬略元机》第136局</span></div>
+        <div class="endgame-item"><strong>反覆驰骤</strong><br><span>Mate in 6 · 《烂柯神机》</span></div>
+        <div class="endgame-item"><strong>二龙绕室</strong><br><span>Mate in 6 · 《适情雅趣》第252局</span></div>
+        <div class="endgame-item"><strong>双马饮泉</strong><br><span>Mate in 6 · 《适情雅趣》第400局</span></div>
+        <div class="endgame-item"><strong>坐镇边陲</strong><br><span>Mate in 6 · 《韬略元机》第129局</span></div>
+        <div class="endgame-item"><strong>塞马嘶群</strong><br><span>Mate in 7 · 《梦入神机》第72局</span></div>
+        <div class="endgame-item"><strong>丹山起凤</strong><br><span>Mate in 7 · 《适情雅趣》第291局</span></div>
+        <div class="endgame-item"><strong>四面楚歌</strong><br><span>Mate in 8 · 《烂柯神机》</span></div>
+        <div class="endgame-item"><strong>独鹿鸣泽</strong><br><span>Mate in 8 · 《适情雅趣》第14局</span></div>
+        <div class="endgame-item"><strong>铁骑追风</strong><br><span>Mate in 8 · 《韬略元机》第173局</span></div>
+        <div class="endgame-item"><strong>载沉载浮</strong><br><span>Mate in 9 · 《适情雅趣》第188局</span></div>
+        <div class="endgame-item"><strong>野马舞风</strong><br><span>Mate in 10 · 《适情雅趣》第221局</span></div>
+        <div class="endgame-item"><strong>双燕争飞</strong><br><span>Mate in 11 · 《梦入神机》第112局</span></div>
+        <div class="endgame-item"><strong>双狮滚球</strong><br><span>Mate in 12 · 《烂柯神机》</span></div>
     </div>
 </section>
 
@@ -327,7 +351,7 @@
         <tr><td>Engine</td><td>Pikafish, a Stockfish descendant built for xiangqi rules</td></tr>
         <tr><td>Evaluation</td><td>NNUE neural network</td></tr>
         <tr><td>On the phone</td><td>Native arm64 binary over UCI, 2 threads, 32 MB hash</td></tr>
-        <tr><td>Levels</td><td>Only the search depth (or time) changes; no skill limiter, no deliberate random moves</td></tr>
+        <tr><td>Levels</td><td>Novice and Learner draw among the six best moves by score, never missing a mate; from Beginner up only the search depth (or time) changes</td></tr>
         <tr><td>Fallback</td><td>A built-in alpha-beta search, used only if the engine cannot start</td></tr>
     </table>
 </section>
