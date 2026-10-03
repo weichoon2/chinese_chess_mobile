@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-03
+
+### Added
+- Two levels below 初级, 新手 and 入门, for people who have just learnt the moves: the engine looks at its six best moves and picks among them by a weighted draw (never missing a mate or walking into one), which beat 初级 in 0% and 13% of 30 calibration games
+- On first launch the app asks how well you play and starts at 初级 unless told otherwise; it used to start everyone at 专业
+- Practice and challenge modes: challenge games count towards the rating and allow no hints or take-backs, practice games allow both and leave the rating alone
+- After a game: play again, or review it as a graph of how the position went, with the player's costliest move marked and the better move drawn on the board; tapping the graph opens the replay at that move
+- An English interface (`values-en`), with moves written in WXF notation (C2=5, H8+7); the pieces keep their characters
+- Thirty endgame studies from the classical manuals (适情雅趣, 烂柯神机, 梦入神机, 韬略元机, 橘中秘), mates in 2 to 12, each verified by Pikafish and by a unit test that plays the solution to mate under the app's rules; a study has a move limit, can be retried or shown solved, is ticked once solved and is saved like any game (see `ENDGAMES.md`)
+- Unit tests for FEN, both notations, the weak levels and every endgame solution
+
+### Changed
+- The running evaluation is hidden by default and can be shown from 更多; when shown it is one reading next to the bar
+- Replay runs from a bar under the board instead of a dialog; the move strip shows the latest round with the full list a tap away
+- The header cards show the pieces each side has taken under 已吃子; the board is quieter, the last move is marked with corner brackets and the selection with a ring
+- New game is drawn quieter than the other buttons and asks before ending an unfinished game
+- The header counts rounds, as the move strip and the exported record do, instead of single moves
+
+### Removed
+- The eight hand-made endgame positions: seven of them were not legal positions
+
+### Fixed
+- Item names in the level and endgame lists were near-black on the dark dialog
+
 ## [2.3.2] - 2026-09-07
 
 ### Changed
