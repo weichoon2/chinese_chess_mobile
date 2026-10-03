@@ -195,6 +195,16 @@ class PikafishEngine(private val context: Context) : Closeable {
         lastScore
     }
 
+    /** The score at [depth] for the side to move, and the move the search settled on. */
+    suspend fun analyse(board: Board, depth: Int): Pair<Score?, Move?> = withContext(Dispatchers.IO) {
+        if (!isReady) return@withContext null to null
+        lastScore = null
+        sendCommand("position fen ${boardToFen(board)}")
+        sendCommand("go depth $depth")
+        val uci = readUntilBestMove()
+        lastScore to uci?.takeIf { it != "(none)" }?.let { uciToMove(it, board) }
+    }
+
     /** Reads engine output up to `bestmove`, recording the score of each `info` line on the way. */
     private fun readUntilBestMove(): String? {
         var bestMoveUci: String? = null

@@ -24,8 +24,6 @@
     <string name="eval_black_mates">Black mates in %1$d</string>
     <string name="eval_red_winning">Red winning</string>
     <string name="eval_black_winning">Black winning</string>
-    <string name="captured_label">Captured</string>
-    <string name="captured_none">No captures</string>
     <string name="round_label">Move %1$d</string>
     <string name="history_empty">Moves</string>
     <string name="history_all">All ›</string>
@@ -60,17 +58,21 @@
     <string name="close">Close</string>
     <string name="review_game">Review</string>
     <string name="analysis_title">How the game went</string>
-    <string name="analysis_red">Red better</string>
-    <string name="analysis_black">Black better</string>
     <string name="analysis_unavailable">The engine isn\'t running, so the game can\'t be analysed</string>
     <string name="show_eval">Show evaluation</string>
     <string name="hide_eval">Hide evaluation</string>
-    <string name="review_line">Move %1$d, %2$s %3$s · %4$s</string>
-    <string name="review_start">Starting position</string>
+    <string name="review_move">Move %1$d: %2$s plays %3$s</string>
+    <string name="review_tag_best">Best</string>
+    <string name="review_tag_inaccuracy">Inaccuracy</string>
+    <string name="review_tag_mistake">Mistake</string>
+    <string name="review_tag_blunder">Blunder</string>
+    <string name="review_better">Engine prefers %1$s (arrow)</string>
+    <string name="review_swing">%1$s → %2$s</string>
+    <string name="review_end">Final position · %1$s</string>
+    <string name="graph_red_tick">R+%1$d</string>
+    <string name="graph_black_tick">B+%1$d</string>
     <string name="review_running">Looking over the game…</string>
     <string name="review_none">No clear mistakes in this game.</string>
-    <string name="review_result">On move %1$d you played %2$s, and the position went from %3$s to %4$s. Better was %5$s: see the arrow on the board.</string>
-    <string name="review_result_plain">On move %1$d you played %2$s, and the position went from %3$s to %4$s.</string>
 
     <!-- Toasts and snackbars -->
     <string name="not_your_turn">Not your turn</string>

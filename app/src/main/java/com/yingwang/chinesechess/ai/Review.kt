@@ -24,4 +24,18 @@ object Review {
      */
     fun cost(before: PikafishEngine.Score, after: PikafishEngine.Score): Double =
         share(before) - (1.0 - share(after))
+
+    /** How a move is judged by its [cost]; the shallow review search is good to a few percent. */
+    enum class Verdict { FINE, INACCURACY, MISTAKE, BLUNDER }
+
+    const val INACCURACY = 0.05
+    const val MISTAKE = 0.10
+    const val BLUNDER = 0.25
+
+    fun verdict(cost: Double): Verdict = when {
+        cost >= BLUNDER -> Verdict.BLUNDER
+        cost >= MISTAKE -> Verdict.MISTAKE
+        cost >= INACCURACY -> Verdict.INACCURACY
+        else -> Verdict.FINE
+    }
 }

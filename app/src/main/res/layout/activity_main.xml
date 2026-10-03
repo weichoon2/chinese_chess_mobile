@@ -68,29 +68,15 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/redScoreText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:fontFamily="serif"
-                android:text="@string/captured_none"
-                android:textColor="@color/chess_text_secondary"
-                android:textSize="12sp" />
 
-            <HorizontalScrollView
+            <!-- Captured pieces, in up to two rows so all sixteen fit (MainActivity.updateCapturedRow). -->
+            <LinearLayout
+                android:id="@+id/redCapturedPieces"
                 android:layout_width="match_parent"
-                android:layout_height="24dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/redCapturedPieces"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal" />
-            </HorizontalScrollView>
+                android:minHeight="20dp"
+                android:orientation="vertical" />
         </LinearLayout>
 
         <LinearLayout
@@ -180,31 +166,15 @@
                     android:background="@drawable/turn_dot_black" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/blackScoreText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:fontFamily="serif"
-                android:text="@string/captured_none"
-                android:textColor="@color/chess_text_secondary"
-                android:textSize="12sp" />
 
-            <HorizontalScrollView
+            <!-- Captured pieces, in up to two rows so all sixteen fit (MainActivity.updateCapturedRow). -->
+            <LinearLayout
+                android:id="@+id/blackCapturedPieces"
                 android:layout_width="match_parent"
-                android:layout_height="24dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:layoutDirection="rtl"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/blackCapturedPieces"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:layoutDirection="ltr"
-                    android:orientation="horizontal" />
-            </HorizontalScrollView>
+                android:minHeight="20dp"
+                android:orientation="vertical" />
         </LinearLayout>
     </LinearLayout>
 

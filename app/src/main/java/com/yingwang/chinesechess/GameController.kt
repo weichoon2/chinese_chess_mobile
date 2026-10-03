@@ -552,6 +552,9 @@ class GameController(
 
     fun enterReplayMode(): Boolean {
         if (moveHistory.isEmpty()) return false
+        // The game holds still while it is looked at: an AI move in flight is dropped and an
+        // AI-vs-AI game pauses, so the moves under review do not change (see exitReplayMode).
+        gameGeneration++
         replayMode = true
         replayMoves = moveHistory.toList()
         replayIndex = replayMoves.size
@@ -564,6 +567,8 @@ class GameController(
         replayMoves = emptyList()
         replayIndex = 0
         onBoardUpdated?.invoke(board)
+        // Pick the game up where it stopped: the AI moves on if it is its turn.
+        if (!gameOver && !board.isCheckmate() && !board.isStalemate() && shouldAIMove()) makeAIMove()
     }
 
     fun isInReplayMode() = replayMode
@@ -769,8 +774,6 @@ class GameController(
         private const val REVIEW_DEPTH = 8
         private const val REVIEW_BEST_DEPTH = 12
         /** A move that loses less than this is not called a mistake. */
-        /** A move that gives away this much of the game (about 120 cp from level) is a mistake. */
-        private const val MISTAKE_THRESHOLD_SHARE = 0.10
 
         /** Search depth for the defending side of an endgame study. */
         private const val ENDGAME_DEFENCE_DEPTH = 12
@@ -803,13 +806,20 @@ class GameController(
      */
     data class Mistake(val index: Int, val played: Move, val better: Move?, val before: Evaluation?, val after: Evaluation?, val delta: Int)
 
-    /** Red-side readings for every position of the game, and the player's costliest move. */
-    data class Analysis(val evals: List<Evaluation?>, val mistake: Mistake?)
+    /** Red-side readings and the engine's move for every position, what each move cost, and the player's costliest move. */
+    data class Analysis(
+        val evals: List<Evaluation?>,
+        /** The engine's choice in each position (none in the last). */
+        val best: List<Move?>,
+        /** What each move cost its player as a share of the game (Review.cost). */
+        val costs: List<Double?>,
+        val mistake: Mistake?
+    )
 
     /**
      * Scores every position of the game at a shallow depth, for the graph of how it went,
      * and finds the [player]'s move with the largest drop (none when no move lost more than
-     * [MISTAKE_THRESHOLD_SHARE], or when [player] is null). Null when the engine is unavailable.
+     * [Review.MISTAKE], or when [player] is null). Null when the engine is unavailable.
      * Runs off the main thread; [onDone] is called on it.
      */
     fun analyzeGame(player: PieceColor?, onDone: (Analysis?) -> Unit) {
@@ -821,29 +831,32 @@ class GameController(
                 // makeMove keeps the side to move (it is for trying moves out); these need the turn to pass.
                 val positions = mutableListOf(start.copy())
                 for (m in moves) positions.add(positions.last().copy().also { it.makeMoveInPlace(m) })
-                // Score of each position for its side to move.
-                val scores = positions.map { pos ->
-                    if (pos.isCheckmate()) PikafishEngine.Score(cp = null, mate = 0) else engine.evaluate(pos, depth = REVIEW_DEPTH)
+                // Score of each position for its side to move, and the move the search preferred.
+                val searched = positions.map { pos ->
+                    if (pos.isCheckmate()) PikafishEngine.Score(cp = null, mate = 0) to null
+                    else engine.analyse(pos, depth = REVIEW_DEPTH)
                 }
+                val scores = searched.map { it.first }
                 val evals = scores.mapIndexed { i, sc ->
                     if (sc?.mate == 0) {
                         // The side to move is mated: a decided game for the other side.
                         Evaluation(cpRed = null, mateRed = if (positions[i].currentPlayer == PieceColor.RED) -1 else 1)
                     } else toRedPerspective(sc, positions[i].currentPlayer)
                 }
+                // What each move cost its player, as a share of the game (see Review).
+                val costs = moves.indices.map { i ->
+                    val before = scores[i]
+                    val after = scores[i + 1]
+                    if (before == null || after == null) null else Review.cost(before, after)
+                }
 
                 // The costliest move is the one that lost the most of the player's share of the
                 // game, not the most centipawns: in a lost game the biggest centipawn drops come
                 // after the game was already gone.
-                var worst: Pair<Int, Double>? = null  // index, cost
-                if (player != null) for (i in moves.indices) {
-                    if (moves[i].piece.color != player) continue
-                    val before = scores[i] ?: continue
-                    val after = scores[i + 1] ?: continue
-                    val cost = Review.cost(before, after)
-                    if (worst == null || cost > worst.second) worst = i to cost
-                }
-                val mistake = worst?.takeIf { it.second >= MISTAKE_THRESHOLD_SHARE }?.let { (index, _) ->
+                val worst = if (player == null) null else moves.indices
+                    .filter { moves[it].piece.color == player && costs[it] != null }
+                    .maxByOrNull { costs[it]!! }
+                val mistake = worst?.takeIf { costs[it]!! >= Review.MISTAKE }?.let { index ->
                     // After the move it is the opponent's turn, so their score is the player's loss.
                     val delta = WeakPlay.comparable(scores[index]!!) + WeakPlay.comparable(scores[index + 1]!!)
                     val better = engine.findBestMove(positions[index], depth = REVIEW_BEST_DEPTH)
@@ -856,7 +869,12 @@ class GameController(
                         delta = delta
                     )
                 }
-                Analysis(evals, mistake)
+                // The deeper search's choice stands for the costliest move, so the arrow there
+                // and the line under the board agree.
+                val best = searched.mapIndexed { i, (_, move) ->
+                    if (mistake != null && i == mistake.index && mistake.better != null) mistake.better else move
+                }
+                Analysis(evals, best, costs, mistake)
             }
             onDone(analysis)
         }

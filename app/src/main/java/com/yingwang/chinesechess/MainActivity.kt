@@ -36,6 +36,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.yingwang.chinesechess.GameController.AIDifficulty
 import com.yingwang.chinesechess.GameController.GameMode
+import com.yingwang.chinesechess.ai.Review
 import com.yingwang.chinesechess.audio.GameAudioManager
 import com.yingwang.chinesechess.model.Piece
 import com.yingwang.chinesechess.model.PieceColor
@@ -70,8 +71,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var blackTurnDot: View
     private lateinit var redRoleText: TextView
     private lateinit var blackRoleText: TextView
-    private lateinit var redScoreText: TextView
-    private lateinit var blackScoreText: TextView
     private lateinit var redCapturedLayout: LinearLayout
     private lateinit var blackCapturedLayout: LinearLayout
     private lateinit var gameTimeText: TextView
@@ -93,6 +92,7 @@ class MainActivity : AppCompatActivity() {
     // Review: the panel under the replay bar, and the analysis of the game it shows, kept
     // while the game's moves are unchanged.
     private lateinit var reviewPanel: View
+    private lateinit var buttonContainer: View
     private lateinit var reviewInfoText: TextView
     private lateinit var reviewGraph: EvalGraphView
     private var review: GameController.Analysis? = null
@@ -193,8 +193,6 @@ class MainActivity : AppCompatActivity() {
         blackTurnDot = findViewById(R.id.blackTurnDot)
         redRoleText = findViewById(R.id.redRoleText)
         blackRoleText = findViewById(R.id.blackRoleText)
-        redScoreText = findViewById(R.id.redScoreText)
-        blackScoreText = findViewById(R.id.blackScoreText)
         redCapturedLayout = findViewById(R.id.redCapturedPieces)
         blackCapturedLayout = findViewById(R.id.blackCapturedPieces)
         gameTimeText = findViewById(R.id.gameTimeText)
@@ -215,6 +213,7 @@ class MainActivity : AppCompatActivity() {
         replayProgressText = findViewById(R.id.replayProgressText)
         moveStrip.setOnClickListener { showFullHistory() }
         reviewPanel = findViewById(R.id.reviewPanel)
+        buttonContainer = findViewById(R.id.buttonContainer)
         reviewInfoText = findViewById(R.id.reviewInfoText)
         reviewGraph = findViewById(R.id.reviewGraph)
         reviewGraph.setOnPickListener { index ->
@@ -414,8 +413,6 @@ class MainActivity : AppCompatActivity() {
      */
     private fun updateScoreLines() {
         val stats = lastStats
-        redScoreText.setText(if (stats?.redCapturedPieces.isNullOrEmpty()) R.string.captured_none else R.string.captured_label)
-        blackScoreText.setText(if (stats?.blackCapturedPieces.isNullOrEmpty()) R.string.captured_none else R.string.captured_label)
         val eval = evaluation
         // Without an engine reading the bar keeps the whole width rather than leave a gap.
         evalText.visibility = if (eval == null) View.GONE else View.VISIBLE
@@ -452,39 +449,60 @@ class MainActivity : AppCompatActivity() {
         updateCapturedRow(blackCapturedLayout, stats.blackCapturedPieces)
     }
 
+    /**
+     * The pieces a side has taken, most valuable first, in one row or, when they would not fit
+     * at a readable size, two: all sixteen fit on a phone. Black's card is right-aligned, so its
+     * rows are too.
+     */
     private fun updateCapturedRow(container: LinearLayout, pieces: List<Piece>) {
         container.removeAllViews()
+        if (pieces.isEmpty()) return
+        val available = container.width
+        if (available == 0) {
+            // Not laid out yet; try again once it is.
+            container.post { if (container.width > 0) updateCapturedRow(container, pieces) }
+            return
+        }
         val sorted = pieces.sortedByDescending { it.type.baseValue }
         val dp = resources.displayMetrics.density
-        // Shrink the chips to fit the card instead of letting the last ones scroll out of sight.
-        val available = (container.parent as? View)?.width ?: 0
+        val gap = (2 * dp).toInt()
         val full = (22 * dp).toInt()
-        val size = if (available > 0 && sorted.isNotEmpty()) {
-            minOf(full, available / sorted.size - (2 * dp).toInt()).coerceAtLeast((12 * dp).toInt())
-        } else full
+        val oneRow = available / (full + gap)
+        val perRow = if (sorted.size <= oneRow) sorted.size else (sorted.size + 1) / 2
+        val size = minOf(full, available / perRow - gap).coerceAtLeast((12 * dp).toInt())
+        val alignEnd = container.id == R.id.blackCapturedPieces
 
-        for (piece in sorted) {
-            val tv = TextView(this).apply {
-                text = piece.type.getDisplayName(piece.color)
-                textSize = 11f * size / full
-                typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
-                setTextColor(
-                    ContextCompat.getColor(
-                        this@MainActivity,
-                        if (piece.color == PieceColor.RED) R.color.chess_piece_red_ink else R.color.chess_piece_black_ink
-                    )
-                )
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                    marginEnd = (2 * dp).toInt()
-                }
-                background = GradientDrawable().apply {
-                    shape = GradientDrawable.OVAL
-                    setColor(ContextCompat.getColor(this@MainActivity, R.color.chess_captured_bg))
-                    setStroke((1 * dp).toInt(), ContextCompat.getColor(this@MainActivity, R.color.chess_captured_stroke))
-                }
+        for (chunk in sorted.chunked(perRow)) {
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = if (alignEnd) Gravity.END else Gravity.START
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, size + gap)
             }
-            container.addView(tv)
+            for (piece in chunk) {
+                val tv = TextView(this).apply {
+                    text = piece.type.getDisplayName(piece.color)
+                    textSize = 11f * size / full
+                    typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+                    setTextColor(
+                        ContextCompat.getColor(
+                            this@MainActivity,
+                            if (piece.color == PieceColor.RED) R.color.chess_piece_red_ink else R.color.chess_piece_black_ink
+                        )
+                    )
+                    gravity = Gravity.CENTER
+                    includeFontPadding = false
+                    layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                        if (alignEnd) marginStart = gap else marginEnd = gap
+                    }
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.OVAL
+                        setColor(ContextCompat.getColor(this@MainActivity, R.color.chess_captured_bg))
+                        setStroke((1 * dp).toInt(), ContextCompat.getColor(this@MainActivity, R.color.chess_captured_stroke))
+                    }
+                }
+                row.addView(tv)
+            }
+            container.addView(row)
         }
     }
 
@@ -708,6 +726,7 @@ class MainActivity : AppCompatActivity() {
                 reviewedMoves = moves
                 reviewGraph.setData(
                     analysis.evals.map { e -> e?.let { it.cpRed to it.mateRed } },
+                    reviewMarks(analysis, moves),
                     analysis.mistake?.index,
                     gameController.getReplayIndex()
                 )
@@ -731,8 +750,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * The moves to mark on the graph: the human player's mistakes and blunders, or both sides'
+     * when no one side is human. Keyed by the position each was played from, the one whose line
+     * under the board explains that move and whose arrow shows the better one.
+     */
+    private fun reviewMarks(
+        analysis: GameController.Analysis,
+        moves: List<com.yingwang.chinesechess.model.Move>
+    ): Map<Int, EvalGraphView.Mark> {
+        val player = humanSide()
+        val marks = mutableMapOf<Int, EvalGraphView.Mark>()
+        for ((i, cost) in analysis.costs.withIndex()) {
+            if (cost == null || (player != null && moves[i].piece.color != player)) continue
+            when (Review.verdict(cost)) {
+                Review.Verdict.BLUNDER -> marks[i] = EvalGraphView.Mark.BLUNDER
+                Review.Verdict.MISTAKE -> marks[i] = EvalGraphView.Mark.MISTAKE
+                else -> {}
+            }
+        }
+        return marks
+    }
+
+    /**
      * Shows the review panel while an analysed game is replayed, with the line for the position
-     * on the board. The better move is drawn only at the mistake, so stepping away hides it.
+     * on the board and the engine's move from it drawn as an arrow. The bottom bar makes way
+     * for the panel, so the graph has room to read.
      */
     private fun updateReviewPanel() {
         val analysis = currentReview()
@@ -740,52 +782,61 @@ class MainActivity : AppCompatActivity() {
         val show = replaying && (analysis != null || reviewRunning)
         if (show != (reviewPanel.visibility == View.VISIBLE)) {
             reviewPanel.visibility = if (show) View.VISIBLE else View.GONE
-            // The board leaves room for the panel; on a tall phone it keeps its full width anyway.
+            buttonContainer.visibility = if (show) View.GONE else View.VISIBLE
+            // With the bottom bar gone the board's lower edge is the screen's, so it leaves room
+            // for the strip and the panel; on a tall phone it keeps its full width anyway.
             val dp = resources.displayMetrics.density
             val reserve = (BOARD_RESERVE_DP * dp).toInt() +
-                if (show) resources.getDimensionPixelSize(R.dimen.review_panel_height) + (6 * dp).toInt() else 0
+                if (show) resources.getDimensionPixelSize(R.dimen.review_panel_height) + (14 * dp).toInt() else 0
             (boardView.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin = reserve
             boardView.requestLayout()
         }
         val index = gameController.getReplayIndex()
-        val mistake = analysis?.mistake
-        boardView.showSuggestion(if (replaying && mistake != null && index == mistake.index) mistake.better else null)
+        val moreToCome = index < gameController.getReplayLength()
+        boardView.showSuggestion(if (replaying && moreToCome) analysis?.best?.getOrNull(index) else null)
         if (!show) return
         if (analysis == null) {
             reviewInfoText.setText(R.string.review_running)
-            reviewGraph.setData(emptyList(), null, null)
+            reviewGraph.setData(emptyList(), emptyMap(), null, null)
             return
         }
         reviewGraph.setCurrent(index)
         reviewInfoText.text = reviewLine(analysis, index)
     }
 
-    /** What happened at the position after [index] moves: the move that led to it and the reading. */
+    /**
+     * The line for the position after [index] moves: the move played from it, how it is judged,
+     * the engine's move when that was different, and how the position went.
+     */
     private fun reviewLine(analysis: GameController.Analysis, index: Int): String {
         val moves = gameController.getMoveHistory()
-        analysis.mistake?.takeIf { it.index == index }?.let { return mistakeText(it, moves) }
-        if (index == 0 || index > moves.size) return getString(R.string.review_start)
+        if (index >= moves.size) {
+            val end = getString(R.string.review_end, analysis.evals.getOrNull(index)?.let { evalSummary(it) } ?: "")
+            return if (analysis.mistake == null && humanSide() != null) end + "\n" + getString(R.string.review_none) else end
+        }
         val before = gameController.getInitialBoard().copy()
-        for (i in 0 until index - 1) before.makeMoveInPlace(moves[i])
-        val move = moves[index - 1]
+        for (i in 0 until index) before.makeMoveInPlace(moves[i])
+        val move = moves[index]
         val side = getString(if (move.piece.color == PieceColor.RED) R.string.red_short else R.string.black_short)
-        val reading = analysis.evals.getOrNull(index)?.let { evalSummary(it) } ?: ""
-        val line = getString(R.string.review_line, (index - 1) / 2 + 1, side, notation(move, before), reading)
-        // The review opens on the last position when there is no mistake to show; say so there.
-        return if (index == moves.size && analysis.mistake == null && humanSide() != null) {
-            line + "\n" + getString(R.string.review_none)
-        } else line
-    }
-
-    private fun mistakeText(m: GameController.Mistake, moves: List<com.yingwang.chinesechess.model.Move>): String {
-        val before = gameController.getInitialBoard().copy()
-        for (i in 0 until m.index) before.makeMoveInPlace(moves[i])
-        val round = m.index / 2 + 1
-        val played = notation(m.played, before)
-        val from = m.before?.let { evalSummary(it) } ?: "?"
-        val to = m.after?.let { evalSummary(it) } ?: "?"
-        return m.better?.let { getString(R.string.review_result, round, played, from, to, notation(it, before)) }
-            ?: getString(R.string.review_result_plain, round, played, from, to)
+        val best = analysis.best.getOrNull(index)
+        val isBest = best != null && best.from == move.from && best.to == move.to
+        val tag = if (isBest) getString(R.string.review_tag_best) else analysis.costs.getOrNull(index)?.let { cost ->
+            when (Review.verdict(cost)) {
+                Review.Verdict.BLUNDER -> getString(R.string.review_tag_blunder)
+                Review.Verdict.MISTAKE -> getString(R.string.review_tag_mistake)
+                Review.Verdict.INACCURACY -> getString(R.string.review_tag_inaccuracy)
+                Review.Verdict.FINE -> null
+            }
+        }
+        val headline = getString(R.string.review_move, index / 2 + 1, side, notation(move, before)) +
+            (tag?.let { " · $it" } ?: "")
+        val swing = getString(
+            R.string.review_swing,
+            analysis.evals.getOrNull(index)?.let { evalSummary(it) } ?: "?",
+            analysis.evals.getOrNull(index + 1)?.let { evalSummary(it) } ?: "?"
+        )
+        val detail = if (best != null && !isBest) getString(R.string.review_better, notation(best, before)) + " · " + swing else swing
+        return headline + "\n" + detail
     }
 
     // ── Dialogs ──

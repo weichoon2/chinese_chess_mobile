@@ -22,8 +22,6 @@
     <string name="eval_black_mates">黑方%1$d步杀</string>
     <string name="eval_red_winning">红方胜势</string>
     <string name="eval_black_winning">黑方胜势</string>
-    <string name="captured_label">已吃子</string>
-    <string name="captured_none">未吃子</string>
     <string name="round_label">回合 %1$d</string>
     <string name="history_empty">棋谱</string>
     <string name="history_all">全部 ›</string>
@@ -58,17 +56,21 @@
     <string name="close">关闭</string>
     <string name="review_game">复盘</string>
     <string name="analysis_title">形势走势</string>
-    <string name="analysis_red">红优</string>
-    <string name="analysis_black">黑优</string>
     <string name="analysis_unavailable">引擎没有启动，暂时无法分析</string>
     <string name="show_eval">显示形势分</string>
     <string name="hide_eval">隐藏形势分</string>
-    <string name="review_line">第%1$d回合 %2$s %3$s · %4$s</string>
-    <string name="review_start">开始局面</string>
+    <string name="review_move">第%1$d回合 %2$s走%3$s</string>
+    <string name="review_tag_best">最佳</string>
+    <string name="review_tag_inaccuracy">缓着</string>
+    <string name="review_tag_mistake">失误</string>
+    <string name="review_tag_blunder">败着</string>
+    <string name="review_better">推荐%1$s（见箭头）</string>
+    <string name="review_swing">形势 %1$s → %2$s</string>
+    <string name="review_end">终局 · %1$s</string>
+    <string name="graph_red_tick">红+%1$d</string>
+    <string name="graph_black_tick">黑+%1$d</string>
     <string name="review_running">正在分析这一局…</string>
     <string name="review_none">这一局没有明显的失误。</string>
-    <string name="review_result">第%1$d回合你走了%2$s，形势从「%3$s」变成「%4$s」。更好的是%5$s，见棋盘上的箭头。</string>
-    <string name="review_result_plain">第%1$d回合你走了%2$s，形势从「%3$s」变成「%4$s」。</string>
 
     <!-- Toasts and snackbars -->
     <string name="not_your_turn">不是你的回合</string>
