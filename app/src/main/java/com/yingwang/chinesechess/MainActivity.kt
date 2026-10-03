@@ -53,6 +53,8 @@ class MainActivity : AppCompatActivity() {
         private const val MATE_HINT_LIMIT = 3
         private const val KEY_DIFFICULTY = "difficulty"
         private const val KEY_CHALLENGE = "challenge"
+        private const val KEY_STREAK_LEVEL = "streak_level"
+        private const val KEY_STREAK = "streak"
     }
 
     private lateinit var boardView: BoardView
@@ -212,7 +214,7 @@ class MainActivity : AppCompatActivity() {
         undoButton = findViewById(R.id.undoButton)
         moreButton = findViewById(R.id.moreButton)
 
-        newGameButton.setOnClickListener { showNewGameDialog() }
+        newGameButton.setOnClickListener { confirmAbandonThen { showNewGameDialog() } }
         moreButton.setOnClickListener { showMoreDialog() }
 
         undoButton.setOnClickListener {
@@ -275,38 +277,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         gameController.onGameOver = { result ->
-            runOnUiThread {
-                val playerColor = gameController.getAIColor().opposite()
-                val isVsAI = gameController.getGameMode() == GameMode.PLAYER_VS_AI
-
-                fun rated(score: Double): String {
-                    if (!isVsAI || !isRatedGame()) return ""
-                    val change = RatingSystem.recordGame(this, gameController.getDifficulty(), score)
-                    val stats = RatingSystem.getStats(this)
-                    val sign = if (change >= 0) "+" else ""
-                    return getString(R.string.rating_summary, stats.rating.toString(), "$sign$change", stats.rankTitle)
-                }
-
-                val message = when (result) {
-                    is GameController.GameResult.Checkmate ->
-                        getString(R.string.wins, sideName(result.winner)) +
-                            rated(if (result.winner == playerColor) 1.0 else 0.0)
-                    is GameController.GameResult.PerpetualCheck ->
-                        getString(R.string.perpetual_check_loss, sideName(result.winner)) +
-                            rated(if (result.winner == playerColor) 1.0 else 0.0)
-                    GameController.GameResult.Stalemate ->
-                        getString(R.string.draw) + rated(0.5)
-                    GameController.GameResult.RepetitionDraw ->
-                        getString(R.string.repetition_draw) + rated(0.5)
-                }
-
-                AlertDialog.Builder(this, R.style.ChessDialogTheme)
-                    .setTitle(R.string.game_over)
-                    .setMessage(message)
-                    .setPositiveButton(R.string.new_game) { _, _ -> gameController.startNewGame() }
-                    .setNegativeButton(R.string.cancel, null)
-                    .show()
-            }
+            runOnUiThread { showGameOver(result) }
         }
 
         gameController.onAIThinking = { isThinking ->
@@ -618,7 +589,147 @@ class MainActivity : AppCompatActivity() {
         updateStatus()
     }
 
+    // ── End of a game ──
+
+    /**
+     * The result, then something to do next: play again, look at the move that cost the most,
+     * or, after a run of wins or losses at one level, move to the next level.
+     */
+    private fun showGameOver(result: GameController.GameResult) {
+        val playerColor = gameController.getAIColor().opposite()
+        val vsAI = gameController.getGameMode() == GameMode.PLAYER_VS_AI && !gameController.isEndgameMode()
+        val playerScore = when (result) {
+            is GameController.GameResult.Checkmate -> if (result.winner == playerColor) 1.0 else 0.0
+            is GameController.GameResult.PerpetualCheck -> if (result.winner == playerColor) 1.0 else 0.0
+            GameController.GameResult.Stalemate, GameController.GameResult.RepetitionDraw -> 0.5
+        }
+        val headline = when (result) {
+            is GameController.GameResult.Checkmate -> getString(R.string.wins, sideName(result.winner))
+            is GameController.GameResult.PerpetualCheck -> getString(R.string.perpetual_check_loss, sideName(result.winner))
+            GameController.GameResult.Stalemate -> getString(R.string.draw)
+            GameController.GameResult.RepetitionDraw -> getString(R.string.repetition_draw)
+        }
+        val message = StringBuilder(headline)
+        if (vsAI && isRatedGame()) {
+            val change = RatingSystem.recordGame(this, gameController.getDifficulty(), playerScore)
+            val stats = RatingSystem.getStats(this)
+            val sign = if (change >= 0) "+" else ""
+            message.append(getString(R.string.rating_summary, stats.rating.toString(), "$sign$change", stats.rankTitle))
+        }
+        val suggestion = if (vsAI) levelSuggestion(playerScore) else null
+        if (suggestion != null) {
+            val name = resources.getStringArray(R.array.difficulty_short)[suggestion.ordinal]
+            val up = suggestion.ordinal > gameController.getDifficulty().ordinal
+            message.append("\n\n").append(getString(if (up) R.string.level_up_suggest else R.string.level_down_suggest, name))
+        }
+
+        val builder = AlertDialog.Builder(this, R.style.ChessDialogTheme)
+            .setTitle(R.string.game_over)
+            .setMessage(message)
+            .setPositiveButton(R.string.play_again) { _, _ ->
+                gameController.startNewGame()
+                updateGameModeDisplay()
+            }
+        if (vsAI && gameController.getMoveHistory().any { it.piece.color == playerColor }) {
+            builder.setNegativeButton(R.string.review_mistake) { _, _ -> reviewMistake(playerColor) }
+        }
+        if (suggestion != null) {
+            val name = resources.getStringArray(R.array.difficulty_short)[suggestion.ordinal]
+            builder.setNeutralButton(getString(R.string.level_switch, name)) { _, _ -> switchLevel(suggestion) }
+        } else {
+            builder.setNeutralButton(R.string.close, null)
+        }
+        builder.show()
+    }
+
+    /**
+     * Keeps a running streak at the current level: two wins in a row suggest the level above,
+     * three losses in a row the level below. A draw or a change of level starts it again.
+     */
+    private fun levelSuggestion(score: Double): AIDifficulty? {
+        val level = gameController.getDifficulty()
+        var streak = if (settings.getString(KEY_STREAK_LEVEL, null) == level.name) settings.getInt(KEY_STREAK, 0) else 0
+        streak = when {
+            score >= 1.0 -> maxOf(streak, 0) + 1
+            score <= 0.0 -> minOf(streak, 0) - 1
+            else -> 0
+        }
+        settings.edit().putString(KEY_STREAK_LEVEL, level.name).putInt(KEY_STREAK, streak).apply()
+        val levels = AIDifficulty.values()
+        return when {
+            streak >= 2 && level.ordinal < levels.size - 1 -> levels[level.ordinal + 1]
+            streak <= -3 && level.ordinal > 0 -> levels[level.ordinal - 1]
+            else -> null
+        }
+    }
+
+    private fun switchLevel(level: AIDifficulty) {
+        val mode = gameController.getGameMode()
+        val aiColor = gameController.getAIColor()
+        settings.edit().putString(KEY_DIFFICULTY, level.name).putInt(KEY_STREAK, 0).apply()
+        gameController.destroy()
+        gameController = GameController(this, level, audioManager)
+        setupGameControllerCallbacks()
+        gameController.setGameMode(mode, aiColor)
+        gameController.startNewGame()
+        updateGameModeDisplay()
+    }
+
+    /** Finds the player's costliest move, opens the replay just before it and draws the better move. */
+    private fun reviewMistake(player: PieceColor) {
+        val working = Snackbar.make(boardView, R.string.review_running, Snackbar.LENGTH_INDEFINITE)
+        working.show()
+        val moves = gameController.getMoveHistory()
+        gameController.findBiggestMistake(player) { mistake ->
+            runOnUiThread {
+                working.dismiss()
+                if (mistake == null) {
+                    Snackbar.make(boardView, R.string.review_none, Snackbar.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
+                var before = gameController.getInitialBoard().copy()
+                for (i in 0 until mistake.index) before = before.makeMove(moves[i])
+                if (!gameController.isInReplayMode()) gameController.enterReplayMode()
+                gameController.replayGoTo(mistake.index)
+                updateGameModeDisplay()
+                updateReplayBar()
+                boardView.showSuggestion(mistake.better)
+
+                val round = mistake.index / 2 + 1
+                val played = MoveNotation.format(mistake.played, before)
+                val from = mistake.before?.let { evalSummary(it) } ?: "?"
+                val to = mistake.after?.let { evalSummary(it) } ?: "?"
+                val text = mistake.better?.let {
+                    getString(R.string.review_result, round, played, from, to, MoveNotation.format(it, before))
+                } ?: getString(R.string.review_result_plain, round, played, from, to)
+                Snackbar.make(boardView, text, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.review_ok) { boardView.showSuggestion(null) }
+                    .setTextMaxLines(5)
+                    .show()
+            }
+        }
+    }
+
     // ── Dialogs ──
+
+    /** A game with moves on the board and no result yet. */
+    private fun gameInProgress(): Boolean {
+        return gameController.getMoveHistory().isNotEmpty() && !gameController.isGameOver()
+    }
+
+    /** Runs [action] at once, or after the player agrees to give up the game in progress. */
+    private fun confirmAbandonThen(action: () -> Unit) {
+        if (!gameInProgress()) {
+            action()
+            return
+        }
+        AlertDialog.Builder(this, R.style.ChessDialogTheme)
+            .setTitle(R.string.abandon_title)
+            .setMessage(R.string.abandon_message)
+            .setPositiveButton(R.string.abandon_confirm) { _, _ -> action() }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
 
     private fun showNewGameDialog() {
         val modes = arrayOf(
@@ -682,6 +793,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun exitReplay() {
+        boardView.showSuggestion(null)
         gameController.exitReplayMode()
         updateGameModeDisplay()
         updateReplayBar()

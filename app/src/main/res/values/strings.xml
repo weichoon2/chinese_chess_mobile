@@ -54,6 +54,17 @@
     <string name="repetition_draw">三次重复局面，和棋！</string>
     <string name="rating_summary">\n\n积分: %1$s (%2$s)\n等级: %3$s</string>
     <string name="game_over">游戏结束</string>
+    <string name="play_again">再来一局</string>
+    <string name="review_mistake">复盘失误</string>
+    <string name="close">关闭</string>
+    <string name="level_up_suggest">在这个难度连胜两局了，可以试试「%1$s」。</string>
+    <string name="level_down_suggest">在这个难度连输三局了，可以先换「%1$s」练练。</string>
+    <string name="level_switch">换成%1$s</string>
+    <string name="review_running">正在分析这一局…</string>
+    <string name="review_none">这一局没有明显的失误。</string>
+    <string name="review_result">第%1$d回合你走了%2$s，形势从「%3$s」变成「%4$s」。更好的是%5$s，见棋盘上的箭头。</string>
+    <string name="review_result_plain">第%1$d回合你走了%2$s，形势从「%3$s」变成「%4$s」。</string>
+    <string name="review_ok">知道了</string>
 
     <!-- Toasts and snackbars -->
     <string name="not_your_turn">不是你的回合</string>
@@ -75,6 +86,9 @@
     <string name="undo_confirm_title">确认悔棋</string>
     <string name="undo_confirm_message">确定要悔棋吗？</string>
     <string name="mode_select_title">选择游戏模式</string>
+    <string name="abandon_title">放弃这一局？</string>
+    <string name="abandon_message">当前棋局还没下完，开新局会结束它。</string>
+    <string name="abandon_confirm">开新局</string>
     <string name="play_red_vs_ai">我执红先手 vs AI</string>
     <string name="play_black_vs_ai">我执黑后手 vs AI</string>
     <string name="two_players">双人对战</string>

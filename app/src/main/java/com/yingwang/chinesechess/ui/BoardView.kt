@@ -212,6 +212,19 @@ class BoardView @JvmOverloads constructor(
     private var offsetX = 0f
     private var offsetY = 0f
     private var lastMove: Move? = null
+    /** A move the player is being shown (the better move in a review), drawn as an arrow. */
+    private var suggestion: Move? = null
+
+    private val suggestionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(220, 28, 128, 112)
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    private val suggestionHeadPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(220, 28, 128, 112)
+        style = Paint.Style.FILL
+    }
 
     private var pieceBitmap: Bitmap? = null
     private var surfaceBitmap: Bitmap? = null
@@ -246,6 +259,34 @@ class BoardView @JvmOverloads constructor(
     fun highlightMove(move: Move?) {
         lastMove = move
         invalidate()
+    }
+
+    fun showSuggestion(move: Move?) {
+        suggestion = move
+        invalidate()
+    }
+
+    private fun drawSuggestion(canvas: Canvas) {
+        val move = suggestion ?: return
+        val x0 = offsetX + move.from.col * cellSize
+        val y0 = offsetY + move.from.row * cellSize
+        val x1 = offsetX + move.to.col * cellSize
+        val y1 = offsetY + move.to.row * cellSize
+        val len = Math.hypot((x1 - x0).toDouble(), (y1 - y0).toDouble()).toFloat()
+        if (len <= 0f) return
+        val ux = (x1 - x0) / len
+        val uy = (y1 - y0) / len
+        val head = cellSize * 0.32f
+        // Stop the shaft at the base of the head so the tip stays sharp.
+        suggestionPaint.strokeWidth = cellSize * 0.12f
+        canvas.drawLine(x0, y0, x1 - ux * head, y1 - uy * head, suggestionPaint)
+        val path = Path().apply {
+            moveTo(x1, y1)
+            lineTo(x1 - ux * head - uy * head * 0.6f, y1 - uy * head + ux * head * 0.6f)
+            lineTo(x1 - ux * head + uy * head * 0.6f, y1 - uy * head - ux * head * 0.6f)
+            close()
+        }
+        canvas.drawPath(path, suggestionHeadPaint)
     }
 
     // ── Animation ──
@@ -536,6 +577,7 @@ class BoardView @JvmOverloads constructor(
         drawLastMove(canvas)
         drawSelection(canvas)
         drawPieces(canvas)
+        drawSuggestion(canvas)
     }
 
     private fun drawLastMove(canvas: Canvas) {

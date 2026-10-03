@@ -93,4 +93,13 @@
         <item name="android:paddingStart">2dp</item>
         <item name="android:paddingEnd">2dp</item>
     </style>
+    <!-- New game ends the game on the board, so it is drawn quieter than hint and undo:
+         no fill, a hairline outline and secondary-coloured text. -->
+    <style name="Widget.Chess.Button.Quiet">
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="strokeColor">@color/chess_panel_stroke</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textColor">@color/chess_text_secondary</item>
+        <item name="iconTint">@color/chess_text_secondary</item>
+    </style>
 </resources>

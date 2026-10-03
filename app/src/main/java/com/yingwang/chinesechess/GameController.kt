@@ -59,6 +59,8 @@ class GameController(
     private var gameMode = GameMode.PLAYER_VS_AI
     private var aiColor = PieceColor.BLACK
     private var isEndgameMode = false
+    /** Set when the result is announced; cleared by anything that resets or rewinds the game. */
+    private var gameOver = false
     private val fallbackAI: ChessAI = ChessAI(maxDepth = 3, timeLimit = 2000, quiescenceDepth = 2)
     private var pikafishEngine: PikafishEngine? = null
 
@@ -109,6 +111,7 @@ class GameController(
 
     fun startNewGame() {
         gameGeneration++
+        gameOver = false
         replayMode = false
         isEndgameMode = false
         board = Board.createInitialBoard()
@@ -391,7 +394,10 @@ class GameController(
         return altCp >= bestCp - 60
     }
 
+    fun isGameOver(): Boolean = gameOver
+
     private fun checkGameOver(): Boolean {
+        gameOver = true
         when {
             board.isCheckmate() -> {
                 audio.playGameOverSound()
@@ -421,11 +427,13 @@ class GameController(
             return true
         }
 
+        gameOver = false
         return false
     }
 
     fun undoLastMove(): Boolean {
         gameGeneration++
+        gameOver = false
         if (moveHistory.isEmpty()) return false
 
         // In player vs AI mode, undo two moves (player and AI)
@@ -466,6 +474,7 @@ class GameController(
 
     fun startEndgamePosition(position: EndgamePosition) {
         gameGeneration++
+        gameOver = false
         replayMode = false
         isEndgameMode = true
         board = Board.createFromPieces(position.pieces, position.firstPlayer)
@@ -639,6 +648,7 @@ class GameController(
 
     fun loadGame(context: Context): Boolean {
         gameGeneration++
+        gameOver = false
         try {
             val prefs = context.getSharedPreferences("chess_save", Context.MODE_PRIVATE)
             val jsonStr = prefs.getString("saved_game", null) ?: return false
@@ -707,6 +717,12 @@ class GameController(
         /** Floor on how long an AI move appears to take, so replies never look instant. */
         private const val MIN_THINK_MS = 900L
 
+        /** Depth for scoring each position of a finished game, and for the better move. */
+        private const val REVIEW_DEPTH = 8
+        private const val REVIEW_BEST_DEPTH = 12
+        /** A move that loses less than this is not called a mistake. */
+        private const val MISTAKE_THRESHOLD_CP = 120
+
         /** Search depth for the defending side of an endgame study. */
         private const val ENDGAME_DEFENCE_DEPTH = 12
 
@@ -730,6 +746,54 @@ class GameController(
     fun deleteSavedGame(context: Context) {
         val prefs = context.getSharedPreferences("chess_save", Context.MODE_PRIVATE)
         prefs.edit().remove("saved_game").apply()
+    }
+
+    /**
+     * The move by [player] that cost the most, judged by the engine, with what it should
+     * have been. [delta] is how far the position fell in centipawns from the player's side.
+     */
+    data class Mistake(val index: Int, val played: Move, val better: Move?, val before: Evaluation?, val after: Evaluation?, val delta: Int)
+
+    /**
+     * Scores every position of the game at a shallow depth and returns the player's move with
+     * the largest drop, or null when no move lost more than [MISTAKE_THRESHOLD_CP] (or the
+     * engine is unavailable). Runs off the main thread; [onDone] is called on it.
+     */
+    fun findBiggestMistake(player: PieceColor, onDone: (Mistake?) -> Unit) {
+        val moves = moveHistory.toList()
+        val start = initialBoard.copy()
+        coroutineScope.launch {
+            val mistake = engineMutex.withLock {
+                val engine = ensurePikafish() ?: return@withLock null
+                // Score of each position for its side to move.
+                val positions = mutableListOf(start.copy())
+                for (m in moves) positions.add(positions.last().makeMove(m))
+                val scores = positions.map { pos ->
+                    if (pos.isCheckmate()) PikafishEngine.Score(cp = null, mate = 0) else engine.evaluate(pos, depth = REVIEW_DEPTH)
+                }
+                var worst: Pair<Int, Int>? = null  // index, delta
+                for (i in moves.indices) {
+                    if (moves[i].piece.color != player) continue
+                    val before = scores[i] ?: continue
+                    val after = scores[i + 1] ?: continue
+                    // After the move it is the opponent's turn, so their score is the player's loss.
+                    val drop = WeakPlay.comparable(before) + WeakPlay.comparable(after)
+                    if (worst == null || drop > worst.second) worst = i to drop
+                }
+                val (index, delta) = worst ?: return@withLock null
+                if (delta < MISTAKE_THRESHOLD_CP) return@withLock null
+                val better = engine.findBestMove(positions[index], depth = REVIEW_BEST_DEPTH)
+                Mistake(
+                    index = index,
+                    played = moves[index],
+                    better = better?.takeIf { it.from != moves[index].from || it.to != moves[index].to },
+                    before = toRedPerspective(scores[index], positions[index].currentPlayer),
+                    after = toRedPerspective(scores[index + 1], positions[index + 1].currentPlayer),
+                    delta = delta
+                )
+            }
+            onDone(mistake)
+        }
     }
 
     fun getHint(callback: (Move?) -> Unit) {
