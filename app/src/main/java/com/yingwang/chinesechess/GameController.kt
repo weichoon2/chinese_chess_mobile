@@ -535,6 +535,17 @@ class GameController(
         rebuildBoardToIndex(replayIndex)
     }
 
+    fun getReplayIndex(): Int = replayIndex
+
+    fun getReplayLength(): Int = replayMoves.size
+
+    /** Shows the position after [index] moves of the game being replayed. */
+    fun replayGoTo(index: Int) {
+        if (!replayMode) return
+        replayIndex = index.coerceIn(0, replayMoves.size)
+        rebuildBoardToIndex(replayIndex)
+    }
+
     fun getReplayInfo(): String =
         if (replayMode) context.getString(R.string.replay_progress, replayIndex, replayMoves.size) else ""
 

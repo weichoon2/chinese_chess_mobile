@@ -83,6 +83,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var thinkingDot3: View
 
     private lateinit var moveHistoryText: TextView
+    private lateinit var moveStrip: View
+    private lateinit var replayBar: View
+    private lateinit var replayProgressText: TextView
     private lateinit var newGameButton: Button
     private lateinit var hintButton: Button
     private lateinit var undoButton: Button
@@ -187,6 +190,21 @@ class MainActivity : AppCompatActivity() {
         thinkingDot2 = findViewById(R.id.thinkingDot2)
         thinkingDot3 = findViewById(R.id.thinkingDot3)
         moveHistoryText = findViewById(R.id.moveHistoryText)
+        moveStrip = findViewById(R.id.moveStrip)
+        replayBar = findViewById(R.id.replayBar)
+        replayProgressText = findViewById(R.id.replayProgressText)
+        moveStrip.setOnClickListener { showFullHistory() }
+        findViewById<View>(R.id.replayStartButton).setOnClickListener { gameController.replayToStart(); updateReplayBar() }
+        findViewById<View>(R.id.replayPrevButton).setOnClickListener {
+            if (!gameController.replayStepBack()) toast(R.string.replay_at_start)
+            updateReplayBar()
+        }
+        findViewById<View>(R.id.replayNextButton).setOnClickListener {
+            if (!gameController.replayStepForward()) toast(R.string.replay_at_end)
+            updateReplayBar()
+        }
+        findViewById<View>(R.id.replayEndButton).setOnClickListener { gameController.replayToEnd(); updateReplayBar() }
+        findViewById<View>(R.id.replayExitButton).setOnClickListener { exitReplay() }
         newGameButton = findViewById(R.id.newGameButton)
         hintButton = findViewById(R.id.hintButton)
         undoButton = findViewById(R.id.undoButton)
@@ -483,13 +501,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** The strip under the board shows only the latest round; the whole game is a tap away. */
     private fun updateMoveHistory() {
         val moves = gameController.getMoveHistory()
         if (moves.isEmpty()) {
             moveHistoryText.text = getString(R.string.history_empty)
             return
         }
+        val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard())
+        val lastRoundStart = (moves.size - 1) / 2 * 2
+        val round = notations.subList(lastRoundStart, moves.size).joinToString("  ")
+        moveHistoryText.text = getString(R.string.history_round, lastRoundStart / 2 + 1, round)
+    }
 
+    private fun fullHistoryText(): String {
+        val moves = gameController.getMoveHistory()
+        if (moves.isEmpty()) return getString(R.string.history_empty)
         val history = StringBuilder()
         val notations = MoveNotation.formatAll(moves, gameController.getInitialBoard())
         moves.forEachIndexed { index, _ ->
@@ -500,12 +527,28 @@ class MainActivity : AppCompatActivity() {
                 history.append("    ").append(notations[index]).append('\n')
             }
         }
-        if (moves.size % 2 == 1) history.append('\n')
+        return history.toString().trimEnd()
+    }
 
-        moveHistoryText.text = history.toString()
-        moveHistoryText.post {
-            (moveHistoryText.parent as? ScrollView)?.fullScroll(View.FOCUS_DOWN)
+    private fun showFullHistory() {
+        val dp = resources.displayMetrics.density
+        val text = TextView(this).apply {
+            text = fullHistoryText()
+            textSize = 15f
+            typeface = Typeface.SERIF
+            setLineSpacing(4 * dp, 1f)
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.chess_history_text))
+            setPadding((24 * dp).toInt(), (8 * dp).toInt(), (24 * dp).toInt(), (8 * dp).toInt())
         }
+        val scroll = ScrollView(this).apply { addView(text) }
+        scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+        AlertDialog.Builder(this, R.style.ChessDialogTheme)
+            .setTitle(R.string.history_title)
+            .setView(scroll)
+            .setPositiveButton(R.string.ok, null)
+            .setNeutralButton(R.string.replay_title) { _, _ -> toggleReplay() }
+            .setNegativeButton(R.string.export) { _, _ -> exportMoveHistory() }
+            .show()
     }
 
     private fun startTimerUpdates() {
@@ -620,36 +663,21 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showReplayControls() {
-        val dialog = AlertDialog.Builder(this, R.style.ChessDialogTheme)
-            .setTitle(R.string.replay_title)
-            .setMessage(gameController.getReplayInfo())
-            .setPositiveButton(R.string.replay_next) { _, _ -> }
-            .setNegativeButton(R.string.replay_prev) { _, _ -> }
-            .setNeutralButton(R.string.replay_exit) { _, _ ->
-                gameController.exitReplayMode()
-                updateGameModeDisplay()
-            }
-            .setCancelable(false)
-            .create()
-
-        dialog.show()
-
-        // Override button behaviours to prevent auto-dismiss
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            if (gameController.replayStepForward()) {
-                dialog.setMessage(gameController.getReplayInfo())
-            } else {
-                toast(R.string.replay_at_end)
-            }
+    private fun updateReplayBar() {
+        val replaying = gameController.isInReplayMode()
+        replayBar.visibility = if (replaying) View.VISIBLE else View.GONE
+        moveStrip.visibility = if (replaying) View.GONE else View.VISIBLE
+        if (replaying) {
+            replayProgressText.text = getString(
+                R.string.replay_counter, gameController.getReplayIndex(), gameController.getReplayLength()
+            )
         }
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener {
-            if (gameController.replayStepBack()) {
-                dialog.setMessage(gameController.getReplayInfo())
-            } else {
-                toast(R.string.replay_at_start)
-            }
-        }
+    }
+
+    private fun exitReplay() {
+        gameController.exitReplayMode()
+        updateGameModeDisplay()
+        updateReplayBar()
     }
 
     private fun preferredDifficulty(): AIDifficulty? =
@@ -787,12 +815,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun toggleReplay() {
         if (gameController.isInReplayMode()) {
-            gameController.exitReplayMode()
-            updateGameModeDisplay()
+            exitReplay()
             toast(R.string.replay_exited)
         } else if (gameController.enterReplayMode()) {
             updateGameModeDisplay()
-            showReplayControls()
+            updateReplayBar()
         } else {
             toast(R.string.replay_none)
         }

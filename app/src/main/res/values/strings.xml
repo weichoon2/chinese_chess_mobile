@@ -23,6 +23,9 @@
     <string name="eval_losing">败势</string>
     <string name="round_label">回合 %1$d</string>
     <string name="history_empty">棋谱</string>
+    <string name="history_all">全部 ›</string>
+    <string name="history_title">本局棋谱</string>
+    <string name="history_round">第%1$d回合  %2$s</string>
 
     <!-- Mode captions: short for the header, long for exports -->
     <string name="mode_pvp">双人</string>
@@ -88,9 +91,13 @@
     <string name="change_difficulty">AI 难度</string>
     <string name="replay_title">棋谱回放</string>
     <string name="replay_progress">第 %1$d / %2$d 步</string>
-    <string name="replay_next">下一步</string>
-    <string name="replay_prev">上一步</string>
+    <string name="replay_next">下一步 ›</string>
+    <string name="replay_prev">‹ 上一步</string>
     <string name="replay_exit">退出回放</string>
+    <string name="replay_start">« 开头</string>
+    <string name="replay_end">末尾 »</string>
+    <string name="replay_exit_short">退出</string>
+    <string name="replay_counter">%1$d/%2$d</string>
     <string name="replay_at_end">已到最后一步</string>
     <string name="replay_at_start">已到第一步</string>
     <string name="replay_exited">已退出回放</string>

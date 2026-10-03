@@ -82,4 +82,15 @@
         <item name="android:fontFamily">serif</item>
         <item name="android:textSize">16sp</item>
     </style>
+    <!-- Compact text buttons for the replay bar under the board. -->
+    <style name="Widget.Chess.ReplayButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/chess_accent</item>
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">2dp</item>
+        <item name="android:paddingEnd">2dp</item>
+    </style>
 </resources>

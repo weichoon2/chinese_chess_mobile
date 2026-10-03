@@ -278,8 +278,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/statusContainer" />
 
-    <!-- The board is constrained to the buttons (not to the move list) with an 84dp reserve,
-         so it keeps its full width on tall phones and yields to the list only on short ones.
+    <!-- The board is constrained to the buttons with a 56dp reserve for the one-line strip
+         under it, so it keeps its full width on tall phones and yields only on short ones.
          9:10.6 leaves room above and below the grid for the file numbers. -->
     <com.yingwang.chinesechess.ui.BoardView
         android:id="@+id/boardView"
@@ -288,7 +288,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="84dp"
+        android:layout_marginBottom="56dp"
         app:layout_constraintBottom_toTopOf="@+id/buttonContainer"
         app:layout_constraintDimensionRatio="9:10.6"
         app:layout_constraintEnd_toEndOf="parent"
@@ -296,32 +296,115 @@
         app:layout_constraintTop_toBottomOf="@+id/evalBar"
         app:layout_constraintVertical_bias="0.0" />
 
-    <ScrollView
-        android:id="@+id/moveHistoryContainer"
+    <!-- Under the board: the latest round of the move list (tap for the whole game), or the
+         replay controls while stepping through a finished game. -->
+    <FrameLayout
+        android:id="@+id/belowBoard"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="44dp"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="6dp"
         android:layout_marginEnd="12dp"
-        android:layout_marginBottom="8dp"
-        android:background="@drawable/info_panel_background"
-        android:minHeight="72dp"
-        app:layout_constraintBottom_toTopOf="@+id/buttonContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/boardView">
 
-        <TextView
-            android:id="@+id/moveHistoryText"
+        <LinearLayout
+            android:id="@+id/moveStrip"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="serif"
-            android:letterSpacing="0.02"
-            android:lineSpacingExtra="3dp"
-            android:text="@string/history_empty"
-            android:textColor="@color/chess_history_text"
-            android:textSize="13sp" />
-    </ScrollView>
+            android:layout_height="match_parent"
+            android:background="@drawable/info_panel_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/moveHistoryText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="start"
+                android:fontFamily="serif"
+                android:maxLines="1"
+                android:text="@string/history_empty"
+                android:textColor="@color/chess_history_text"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/moveHistoryMore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="serif"
+                android:text="@string/history_all"
+                android:textColor="@color/chess_accent"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/replayBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/info_panel_background"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/replayStartButton"
+                style="@style/Widget.Chess.ReplayButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/replay_start" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/replayPrevButton"
+                style="@style/Widget.Chess.ReplayButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                android:text="@string/replay_prev" />
+
+            <TextView
+                android:id="@+id/replayProgressText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:minWidth="64dp"
+                android:gravity="center"
+                android:textColor="@color/chess_text"
+                android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/replayNextButton"
+                style="@style/Widget.Chess.ReplayButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                android:text="@string/replay_next" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/replayEndButton"
+                style="@style/Widget.Chess.ReplayButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/replay_end" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/replayExitButton"
+                style="@style/Widget.Chess.ReplayButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/replay_exit_short" />
+        </LinearLayout>
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/buttonContainer"
