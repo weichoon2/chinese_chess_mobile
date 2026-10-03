@@ -39,6 +39,12 @@ android {
     }
 
     buildTypes {
+        // Debug builds install beside the store version under their own id and name, so a
+        // preview can go on a phone without touching the real app or its saved games.
+        debug {
+            applicationIdSuffix = ".preview"
+            versionNameSuffix = "-preview"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
