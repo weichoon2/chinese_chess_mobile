@@ -58,7 +58,9 @@ class GameController(
     private var initialBoard = Board.createInitialBoard()
     private var gameMode = GameMode.PLAYER_VS_AI
     private var aiColor = PieceColor.BLACK
-    private var isEndgameMode = false
+    /** The study being solved, if this is endgame practice. */
+    private var endgame: EndgameStudy? = null
+    private val inEndgame: Boolean get() = endgame != null
     /** Set when the result is announced; cleared by anything that resets or rewinds the game. */
     private var gameOver = false
     private val fallbackAI: ChessAI = ChessAI(maxDepth = 3, timeLimit = 2000, quiescenceDepth = 2)
@@ -86,6 +88,8 @@ class GameController(
     var onMoveCompleted: ((Move) -> Unit)? = null
     var onStatsUpdated: ((GameStats) -> Unit)? = null
     var onMoveAnimationRequested: ((Move, Board) -> Unit)? = null
+    /** The player made as many moves as the study allows without mating. */
+    var onEndgameFailed: ((EndgameStudy) -> Unit)? = null
 
     data class GameStats(
         val redScore: Int,
@@ -113,7 +117,7 @@ class GameController(
         gameGeneration++
         gameOver = false
         replayMode = false
-        isEndgameMode = false
+        endgame = null
         board = Board.createInitialBoard()
         initialBoard = board.copy()
         moveHistory.clear()
@@ -194,6 +198,14 @@ class GameController(
 
         // Check game over
         if (checkGameOver()) {
+            return true
+        }
+
+        val study = endgame
+        if (study != null && endgameMovesLeft() <= 0) {
+            gameOver = true
+            audio.playGameOverSound()
+            onEndgameFailed?.invoke(study)
             return true
         }
 
@@ -282,14 +294,14 @@ class GameController(
         if (candidates != null && candidates.isEmpty()) return null to null
         // An endgame study is only a study against the best defence, whatever the level.
         val depth = when {
-            isEndgameMode -> ENDGAME_DEFENCE_DEPTH
+            inEndgame -> ENDGAME_DEFENCE_DEPTH
             difficulty.pikafishDepth > 0 -> difficulty.pikafishDepth
             else -> 0
         }
         val timeMs = if (depth == 0) 10000L else 0L  // 棋圣: 10s unlimited
         val fromEngine = engineMutex.withLock {
             val engine = ensurePikafish() ?: return@withLock null
-            if (difficulty.candidates > 1 && !isEndgameMode) {
+            if (difficulty.candidates > 1 && !inEndgame) {
                 val options = engine.findCandidates(board, depth, difficulty.candidates, candidates)
                 val choice = WeakPlay.pick(options, difficulty.spreadCp) ?: return@withLock null
                 return@withLock choice to options.first { it.first == choice }.second
@@ -472,12 +484,12 @@ class GameController(
         return true
     }
 
-    fun startEndgamePosition(position: EndgamePosition) {
+    fun startEndgame(study: EndgameStudy) {
         gameGeneration++
         gameOver = false
         replayMode = false
-        isEndgameMode = true
-        board = Board.createFromPieces(position.pieces, position.firstPlayer)
+        endgame = study
+        board = Fen.parse(study.fen)
         initialBoard = board.copy()
         moveHistory.clear()
         positionHashes.clear()
@@ -490,13 +502,47 @@ class GameController(
         redCapturedPieces.clear()
         blackCapturedPieces.clear()
         gameMode = GameMode.PLAYER_VS_AI
-        aiColor = PieceColor.BLACK
+        aiColor = board.currentPlayer.opposite()
         onBoardUpdated?.invoke(board)
         updateStats()
+        onEvaluationUpdated?.invoke(null)
         if (!shouldAIMove()) refreshEvaluation()
     }
 
-    fun isEndgameMode(): Boolean = isEndgameMode
+    fun getEndgame(): EndgameStudy? = endgame
+
+    /** Moves the player still has to deliver mate in the current study. */
+    fun endgameMovesLeft(): Int {
+        val study = endgame ?: return 0
+        val player = aiColor.opposite()
+        return study.mateIn - moveHistory.count { it.piece.color == player }
+    }
+
+    /**
+     * Sets the study up again and opens its solution in the replay, one move at a time.
+     * Leaving the replay leaves the study at its start, ready to try.
+     */
+    fun showSolution(study: EndgameStudy) {
+        startEndgame(study)
+        val moves = mutableListOf<Move>()
+        val walk = initialBoard.copy()
+        for (uci in study.solution) {
+            if (uci.length < 4) break
+            val from = Position(9 - (uci[1] - '0'), uci[0] - 'a')
+            val to = Position(9 - (uci[3] - '0'), uci[2] - 'a')
+            val piece = walk.getPiece(from) ?: break
+            val move = Move(from, to, piece, walk.getPiece(to))
+            moves.add(move)
+            walk.makeMoveInPlace(move)
+        }
+        if (moves.isEmpty()) return
+        replayMode = true
+        replayMoves = moves
+        replayIndex = 0
+        rebuildBoardToIndex(0)
+    }
+
+    fun isEndgameMode(): Boolean = inEndgame
 
     // --- Replay Mode ---
 
@@ -607,15 +653,12 @@ class GameController(
     }
 
     fun saveGame(context: Context): Boolean {
-        if (isEndgameMode) {
-            // Endgame studies start from a custom position the save format does
-            // not carry; replaying their moves onto the standard opening produced
-            // a scrambled board on resume. They are short, so just do not persist.
-            deleteSavedGame(context)
-            return false
-        }
         try {
             val json = JSONObject()
+            // The position the game started from, so an endgame study resumes on its own
+            // board instead of having its moves replayed onto the opening.
+            json.put("initialFen", Fen.format(initialBoard))
+            endgame?.let { json.put("endgameId", it.id) }
             json.put("gameMode", gameMode.name)
             json.put("aiColor", aiColor.name)
             json.put("difficulty", difficulty.name)
@@ -658,10 +701,11 @@ class GameController(
             gameMode = GameMode.valueOf(json.getString("gameMode"))
             aiColor = PieceColor.valueOf(json.getString("aiColor"))
 
-            // Replay all moves
-            board = Board.createInitialBoard()
+            // Replay all moves from where the game started
+            board = json.optString("initialFen").takeIf { it.isNotEmpty() }?.let { Fen.parse(it) }
+                ?: Board.createInitialBoard()
             initialBoard = board.copy()
-            isEndgameMode = false
+            endgame = json.optString("endgameId").takeIf { it.isNotEmpty() }?.let { EndgameStudies.byId(context, it) }
             replayMode = false
             moveHistory.clear()
             positionHashes.clear()

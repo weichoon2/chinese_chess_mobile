@@ -280,6 +280,13 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { showGameOver(result) }
         }
 
+        gameController.onEndgameFailed = {
+            runOnUiThread {
+                updateStatus()
+                showEndgameResult(solved = false)
+            }
+        }
+
         gameController.onAIThinking = { isThinking ->
             runOnUiThread {
                 aiThinkingIndicator.visibility = if (isThinking) View.VISIBLE else View.GONE
@@ -365,6 +372,8 @@ class MainActivity : AppCompatActivity() {
             board.isCheckmate() -> getString(R.string.wins, sideName(board.currentPlayer.opposite()))
             board.isStalemate() -> getString(R.string.draw_short)
             board.isInCheck(board.currentPlayer) -> getString(R.string.in_check, side)
+            gameController.isEndgameMode() && !gameController.isGameOver() ->
+                getString(R.string.endgame_goal, gameController.getEndgame()?.mateIn ?: 0, gameController.endgameMovesLeft())
             else -> getString(R.string.side_to_move, side)
         }
     }
@@ -379,6 +388,8 @@ class MainActivity : AppCompatActivity() {
         redScoreText.setText(if (stats?.redCapturedPieces.isNullOrEmpty()) R.string.captured_none else R.string.captured_label)
         blackScoreText.setText(if (stats?.blackCapturedPieces.isNullOrEmpty()) R.string.captured_none else R.string.captured_label)
         val eval = evaluation
+        // Without an engine reading the bar keeps the whole width rather than leave a gap.
+        evalText.visibility = if (eval == null) View.GONE else View.VISIBLE
         evalText.text = if (eval == null) "" else evalSummary(eval)
     }
 
@@ -597,6 +608,10 @@ class MainActivity : AppCompatActivity() {
      */
     private fun showGameOver(result: GameController.GameResult) {
         val playerColor = gameController.getAIColor().opposite()
+        if (gameController.isEndgameMode()) {
+            showEndgameResult(solved = result is GameController.GameResult.Checkmate && result.winner == playerColor)
+            return
+        }
         val vsAI = gameController.getGameMode() == GameMode.PLAYER_VS_AI && !gameController.isEndgameMode()
         val playerScore = when (result) {
             is GameController.GameResult.Checkmate -> if (result.winner == playerColor) 1.0 else 0.0
@@ -767,18 +782,65 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    /** The studies by length of mate, each marked once solved, with the book it comes from. */
     private fun showEndgameDialog() {
-        val names = EndgamePositions.positions
-            .map { getString(R.string.endgame_item, it.name, it.description) }
-            .toTypedArray()
+        val studies = EndgameStudies.all(this)
+        val solved = EndgameStudies.solved(this)
+        val items = studies.map { study ->
+            SpannableStringBuilder(
+                getString(R.string.endgame_item, if (study.id in solved) "✓ " else "", study.mateIn, study.name)
+            ).apply {
+                if (study.source.isNotEmpty()) {
+                    append("\n")
+                    val start = length
+                    append(getString(R.string.endgame_source, study.source))
+                    setSpan(RelativeSizeSpan(0.8f), start, length, 0)
+                    setSpan(
+                        ForegroundColorSpan(ContextCompat.getColor(this@MainActivity, R.color.chess_text_secondary)),
+                        start, length, 0
+                    )
+                }
+            }
+        }.toTypedArray<CharSequence>()
 
         AlertDialog.Builder(this, R.style.ChessDialogTheme)
-            .setTitle(R.string.endgame_select_title)
-            .setAdapter(styledListAdapter(names)) { _, which ->
-                gameController.startEndgamePosition(EndgamePositions.positions[which])
-                updateGameModeDisplay()
-            }
+            .setTitle(getString(R.string.endgame_select_progress, solved.count { id -> studies.any { it.id == id } }, studies.size))
+            .setItems(items) { _, which -> startStudy(studies[which]) }
             .show()
+    }
+
+    private fun startStudy(study: EndgameStudy) {
+        if (gameController.isInReplayMode()) exitReplay()
+        gameController.startEndgame(study)
+        updateGameModeDisplay()
+    }
+
+    /** Solved: next study or the same again. Not solved: again, or see how it goes. */
+    private fun showEndgameResult(solved: Boolean) {
+        val study = gameController.getEndgame() ?: return
+        if (solved) EndgameStudies.markSolved(this, study.id)
+        val next = EndgameStudies.nextUnsolved(this, study)
+        val builder = AlertDialog.Builder(this, R.style.ChessDialogTheme)
+        if (solved) {
+            builder.setTitle(R.string.endgame_solved_title)
+                .setMessage(getString(R.string.endgame_solved_message, study.name, study.mateIn))
+            if (next != null) builder.setPositiveButton(R.string.endgame_next) { _, _ -> startStudy(next) }
+            builder.setNegativeButton(R.string.endgame_retry) { _, _ -> startStudy(study) }
+        } else {
+            builder.setTitle(R.string.endgame_failed_title)
+                .setMessage(getString(R.string.endgame_failed_message, study.mateIn))
+                .setPositiveButton(R.string.endgame_retry) { _, _ -> startStudy(study) }
+                .setNegativeButton(R.string.endgame_solution) { _, _ -> showSolution(study) }
+            if (next != null) builder.setNeutralButton(R.string.endgame_next) { _, _ -> startStudy(next) }
+        }
+        builder.show()
+    }
+
+    private fun showSolution(study: EndgameStudy) {
+        gameController.showSolution(study)
+        updateGameModeDisplay()
+        updateReplayBar()
+        Snackbar.make(boardView, R.string.endgame_solution_note, Snackbar.LENGTH_LONG).show()
     }
 
     private fun updateReplayBar() {
