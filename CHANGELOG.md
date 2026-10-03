@@ -8,12 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.4.1] - 2026-10-03
 
 ### Changed
-- The review is a panel under the board instead of a dialog: drag along the graph to step through the game, or use the replay buttons; a line above the graph says what was played and how the position stood. The better move and its explanation show only at the mistake
-- The mistake is the move that lost the most of the player's winning chances, not the most centipawns, so moves played after the game was already lost are no longer picked
+- The review is a panel under the board instead of a dialog: drag along the graph to step through the game, or use the replay buttons; the bottom bar steps aside while it is open
+- Every position in the review shows the engine's move as an arrow, and the line above the graph names the move played, judges it (best, inaccuracy, mistake, blunder) and gives the engine's choice when it differed
+- The graph is drawn in pawns on a scale that fits the game, labelled 红+5 / 0 / 黑+5; mistakes and blunders are coloured on the curve with a dot where they were played
+- The costliest move is the one that lost the most of the player's winning chances, not the most centipawns, so moves played after the game was already lost are no longer picked
+- The header cards drop the 已吃子 label and wrap captured pieces onto two rows, so all sixteen fit
 
 ### Fixed
 - A replayed position kept the last-move marks at the start and a piece selected before the replay
 - The suggestion arrow and the mistake note stayed on screen while stepping through other moves
+- An AI move in flight, or an AI-vs-AI game, went on while the game was being replayed
 
 ## [2.4.0] - 2026-10-03
 
