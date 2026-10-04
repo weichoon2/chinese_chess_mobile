@@ -2,6 +2,7 @@ package com.yingwang.chinesechess.ui
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
@@ -192,28 +193,30 @@ class BoardView @JvmOverloads constructor(
         maskFilter = BlurMaskFilter(10f, BlurMaskFilter.Blur.NORMAL)
     }
 
+    // The move marks take their colours from the theme: dark on the pale board, light on the
+    // night one, where the old dark dots could hardly be seen.
     private val legalMoveDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(110, 50, 40, 30)
+        color = color(R.color.board_move_dot)
         style = Paint.Style.FILL
     }
 
     private val captureRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(150, 210, 50, 50)
+        color = color(R.color.board_capture_mark)
         strokeWidth = 3.5f
         style = Paint.Style.STROKE
     }
 
     private val captureCornerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(150, 210, 50, 50)
+        color = color(R.color.board_capture_mark)
         strokeWidth = 2.5f
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
     }
 
     private val selectionRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(28, 128, 112)
+        color = color(R.color.board_selection)
         style = Paint.Style.STROKE
-        strokeWidth = 4.5f
+        strokeWidth = 6f
     }
 
     private var cellSize = 0f
@@ -653,12 +656,14 @@ class BoardView @JvmOverloads constructor(
         }
 
         val jade = piece.color == PieceColor.BLACK
-        val face = if (jade) intArrayOf(Color.rgb(247, 250, 239), Color.rgb(224, 234, 211), Color.rgb(183, 202, 174))
+        val night = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        val face = if (night) intArrayOf(Color.rgb(250, 247, 241), Color.rgb(234, 229, 221), Color.rgb(193, 185, 178))
+            else if (jade) intArrayOf(Color.rgb(247, 250, 239), Color.rgb(224, 234, 211), Color.rgb(183, 202, 174))
             else intArrayOf(Color.rgb(255, 253, 241), Color.rgb(243, 238, 218), Color.rgb(212, 202, 173))
         val thickness = cellSize * 0.055f
         pieceSidePaint.shader = LinearGradient(x, y, x, y + radius + thickness,
-            if (jade) Color.rgb(191, 210, 180) else Color.rgb(229, 220, 191),
-            if (jade) Color.rgb(115, 143, 111) else Color.rgb(163, 146, 110), Shader.TileMode.CLAMP)
+            if (night) Color.rgb(222, 216, 208) else if (jade) Color.rgb(191, 210, 180) else Color.rgb(229, 220, 191),
+            if (night) Color.rgb(133, 123, 119) else if (jade) Color.rgb(115, 143, 111) else Color.rgb(163, 146, 110), Shader.TileMode.CLAMP)
         pieceSidePaint.alpha = alpha
         canvas.drawCircle(x, y + thickness, radius, pieceSidePaint)
         pieceFacePaint.shader = RadialGradient(x - radius * 0.28f, y - radius * 0.35f,
@@ -666,7 +671,7 @@ class BoardView @JvmOverloads constructor(
         pieceFacePaint.alpha = alpha
         canvas.drawCircle(x, y, radius, pieceFacePaint)
         pieceFacePaint.shader = null
-        pieceOutlinePaint.color = if (jade) Color.rgb(141, 162, 134) else Color.rgb(179, 157, 115)
+        pieceOutlinePaint.color = if (night) Color.rgb(156, 142, 128) else if (jade) Color.rgb(141, 162, 134) else Color.rgb(179, 157, 115)
         pieceOutlinePaint.strokeWidth = cellSize * 0.025f
         pieceOutlinePaint.alpha = alpha
         canvas.drawCircle(x, y, radius * 0.95f, pieceOutlinePaint)
@@ -675,7 +680,7 @@ class BoardView @JvmOverloads constructor(
         pieceHighlightPaint.strokeWidth = cellSize * 0.026f
         val rim = RectF(x - radius * 0.97f, y - radius * 0.97f, x + radius * 0.97f, y + radius * 0.97f)
         canvas.drawArc(rim, 195f, 145f, false, pieceHighlightPaint)
-        pieceInnerRingPaint.color = if (jade) Color.rgb(136, 160, 126) else Color.rgb(175, 153, 112)
+        pieceInnerRingPaint.color = if (night) Color.rgb(158, 145, 131) else if (jade) Color.rgb(136, 160, 126) else Color.rgb(175, 153, 112)
         pieceInnerRingPaint.strokeWidth = cellSize * 0.018f
         pieceInnerRingPaint.alpha = alpha * 150 / 255
         canvas.drawCircle(x, y, radius * 0.79f, pieceInnerRingPaint)

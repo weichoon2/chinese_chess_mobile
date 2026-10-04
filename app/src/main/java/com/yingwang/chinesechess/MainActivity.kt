@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -31,6 +32,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
+import androidx.core.widget.TextViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -59,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_DIFFICULTY = "difficulty"
         private const val KEY_CHALLENGE = "challenge"
         private const val KEY_SHOW_EVAL = "show_eval"
+        private const val KEY_APPEARANCE = "appearance_mode"
+        private const val DEFAULT_APPEARANCE = AppCompatDelegate.MODE_NIGHT_YES
         /** Room the board leaves under itself for the move strip (activity_main.xml). */
         private const val BOARD_RESERVE_DP = 56
         /** How long the player stays on a review position before the engine takes a longer look. */
@@ -119,7 +123,9 @@ class MainActivity : AppCompatActivity() {
     private var aiThinking = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        delegate.localNightMode = settings.getInt("appearance_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        // Dark unless the player picks otherwise: the app has always been dark, and players
+        // updating from it should not find it turned pale.
+        delegate.localNightMode = settings.getInt(KEY_APPEARANCE, DEFAULT_APPEARANCE)
         super.onCreate(savedInstanceState)
         updateSystemBarAppearance()
         setContentView(R.layout.activity_main)
@@ -232,13 +238,13 @@ class MainActivity : AppCompatActivity() {
     private fun showThemeDialog() {
         val modes = intArrayOf(AppCompatDelegate.MODE_NIGHT_NO, AppCompatDelegate.MODE_NIGHT_YES,
             AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        val selected = modes.indexOf(settings.getInt("appearance_mode", modes[2])).coerceAtLeast(0)
+        val selected = modes.indexOf(settings.getInt(KEY_APPEARANCE, DEFAULT_APPEARANCE)).coerceAtLeast(0)
         AlertDialog.Builder(this, R.style.ChessDialogTheme)
             .setTitle(R.string.theme_title)
             .setSingleChoiceItems(arrayOf(getString(R.string.theme_light), getString(R.string.theme_dark),
                 getString(R.string.theme_system)), selected) { dialog, index ->
                 dialog.dismiss()
-                settings.edit().putInt("appearance_mode", modes[index]).apply()
+                settings.edit().putInt(KEY_APPEARANCE, modes[index]).apply()
                 delegate.localNightMode = modes[index]
             }.setNegativeButton(R.string.cancel, null).show()
     }
@@ -475,8 +481,12 @@ class MainActivity : AppCompatActivity() {
         val stats = lastStats
         val eval = evaluation
         // Without an engine reading the bar keeps the whole width rather than leave a gap.
-        evalText.visibility = if (eval == null) View.GONE else View.VISIBLE
-        evalText.text = if (eval == null) "" else evalSummary(eval)
+        // Hidden, not gone, while there is no reading yet: the row keeps its height, so the board
+        // under it does not jump when the first evaluation of a game arrives.
+        // The placeholder is a real reading's text, since an empty line is shorter than one in
+        // Chinese characters.
+        evalText.visibility = if (eval == null) View.INVISIBLE else View.VISIBLE
+        evalText.text = if (eval == null) getString(R.string.eval_even) else evalSummary(eval)
     }
 
     private fun evalSummary(eval: GameController.Evaluation): String {
@@ -522,7 +532,6 @@ class MainActivity : AppCompatActivity() {
             }
         container.addView(TextView(this).apply {
             text = summary
-            textSize = 13f
             typeface = Typeface.SERIF
             // In the colour of the side the pieces belonged to, as on the board.
             setTextColor(
@@ -531,9 +540,16 @@ class MainActivity : AppCompatActivity() {
                     if (pieces.first().color == PieceColor.RED) R.color.chess_red_side else R.color.chess_black_side
                 )
             )
-            gravity = if (container.id == R.id.blackCapturedPieces) Gravity.END else Gravity.START
-            maxLines = 2
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            gravity = (if (container.id == R.id.blackCapturedPieces) Gravity.END else Gravity.START) or Gravity.CENTER_VERTICAL
+            // One line of a fixed height, the text shrinking as captures mount up, so the header
+            // (and the board under it) never moves when a piece is taken.
+            maxLines = 1
+            includeFontPadding = false
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 8, 13, 1, TypedValue.COMPLEX_UNIT_SP)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                resources.getDimensionPixelSize(R.dimen.captured_row_height)
+            )
         })
     }
 

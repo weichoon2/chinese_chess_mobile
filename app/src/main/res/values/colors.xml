@@ -51,4 +51,8 @@
     <color name="board_frame_light">#F6F7EB</color>
     <color name="board_river">#526F60</color>
     <color name="board_coord">#637866</color>
+    <!-- Marks drawn on the board while choosing a move. -->
+    <color name="board_move_dot">#6E32281E</color>
+    <color name="board_capture_mark">#96D23232</color>
+    <color name="board_selection">#1C8070</color>
 </resources>

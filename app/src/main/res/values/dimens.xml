@@ -4,4 +4,6 @@
          board leaves this much more room. 190dp fits under the board on a 443dp-wide phone,
          so the board keeps its size there. -->
     <dimen name="review_panel_height">190dp</dimen>
+    <!-- The captured-pieces line in each header card: fixed, so a capture never moves the board. -->
+    <dimen name="captured_row_height">22dp</dimen>
 </resources>

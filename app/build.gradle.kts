@@ -23,8 +23,8 @@ android {
         applicationId = "com.yingwang.chinesechess"
         minSdk = 24
         targetSdk = 36
-        versionCode = 21
-        versionName = "2.4.6"
+        versionCode = 22
+        versionName = "2.4.7"
     }
 
     // Release signing comes from keystore.properties in the repo root (gitignored) or from

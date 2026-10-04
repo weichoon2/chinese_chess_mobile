@@ -1,0 +1,10 @@
+[
+ {
+  "language": "en-US",
+  "text": "A dark theme, Night Jade: a smoky ink landscape and board with moon-white text and pale gold lines, and the same cinnabar and ink pieces. The app opens dark; switch to light or follow the system under More > Appearance. Move dots and the selection ring stand out on the dark board. Fixed: the board shifting at the start of a game, the AI thinking without moving right after launch, and the last-move mark after a take-back."
+ },
+ {
+  "language": "zh-CN",
+  "text": "新增深色主题「墨玉夜山」：烟墨灰的山水与棋盘，月白文字配淡金棋线，棋子依旧朱砂红、墨色。默认打开就是深色，也可以在「更多」→「界面主题」里换成浅色「月白青玉」或跟随系统。深色下可走位置的小点和选中标记更醒目。修复：开局时棋盘会轻微跳动；刚打开就走棋时电脑偶尔一直显示思考中不落子；悔棋后「上一手」标记位置不对。"
+ }
+]

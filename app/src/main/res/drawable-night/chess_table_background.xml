@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The night table: the same ink landscape as the day, tinted to night green and shaded so
+<!-- The night table: the same ink landscape as the day, tinted to smoky grey and shaded so
      the panels and board read on it. Colours are in values-night/colors.xml. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>

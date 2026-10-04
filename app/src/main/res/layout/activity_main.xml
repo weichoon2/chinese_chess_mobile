@@ -88,7 +88,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:minHeight="20dp"
+                android:minHeight="@dimen/captured_row_height"
                 android:orientation="vertical" />
         </LinearLayout>
 
@@ -186,7 +186,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:minHeight="20dp"
+                android:minHeight="@dimen/captured_row_height"
                 android:orientation="vertical" />
         </LinearLayout>
     </LinearLayout>

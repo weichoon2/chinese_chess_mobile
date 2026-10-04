@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.7] - 2026-10-04
+
+### Changed
+- The dark theme is smoky ink grey with moon-white text and pale gold lines instead of night green, and its pieces are a warmer white
+- The app opens dark unless the player picks otherwise in 界面主题; it no longer follows the system by default, since the app has always been dark
+
+### Fixed
+- The board shifted at the start of a game: with the evaluation shown, its number was gone until the first reading arrived, and the row grew when it did; the captured-pieces line was a little taller with text in it, and taller still once it wrapped. The number now keeps its place, and the captured line is one line of fixed height whose text shrinks as captures mount up
+- On the dark board the legal-move dots were dark brown and could hardly be seen. The move dots, capture marks and selection ring now take their colours from the theme: light dots, a red capture mark and a saturated gold selection ring at night, the old colours by day; the selection ring is thicker in both
+
 ## [2.4.6] - 2026-10-04
 
 ### Fixed
