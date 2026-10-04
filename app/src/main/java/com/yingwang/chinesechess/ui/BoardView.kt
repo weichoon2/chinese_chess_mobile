@@ -3,12 +3,12 @@ package com.yingwang.chinesechess.ui
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.ContextCompat
 import com.yingwang.chinesechess.R
 import com.yingwang.chinesechess.model.*
@@ -18,7 +18,7 @@ import java.util.Random
  * Renders the board and pieces.
  *
  * The board itself is drawn in code from the `board_*` colour tokens: a framed slab of
- * honey-coloured wood with a light grain, a double border, palace lines, position marks,
+ * pale jade with faint mineral veins, a double border, palace lines, position marks,
  * the river text and file numbers. Everything static is rendered once per size into a
  * bitmap, so a frame during a move animation only blits that bitmap and draws the pieces.
  */
@@ -66,12 +66,15 @@ class BoardView @JvmOverloads constructor(
     private val redInk = color(R.color.chess_piece_red_ink)
     private val blackInk = color(R.color.chess_piece_black_ink)
 
+    private val calligraphy = ResourcesCompat.getFont(context, R.font.jade_chess_kai)
+        ?: Typeface.create(Typeface.SERIF, Typeface.NORMAL)
+
     // ── Paints ──
 
     private val framePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = frameColor
         style = Paint.Style.FILL
-        setShadowLayer(14f, 0f, 6f, Color.argb(120, 0, 0, 0))
+        setShadowLayer(7f, 0f, 3f, Color.argb(55, 48, 65, 42))
     }
 
     private val frameBevelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -99,7 +102,7 @@ class BoardView @JvmOverloads constructor(
     private val riverTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = riverColor
         textAlign = Paint.Align.CENTER
-        typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        typeface = calligraphy
     }
 
     private val coordPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -118,23 +121,27 @@ class BoardView @JvmOverloads constructor(
     private val redTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = redInk
         textAlign = Paint.Align.CENTER
-        typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        typeface = calligraphy
     }
 
     private val blackTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = blackInk
         textAlign = Paint.Align.CENTER
-        typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        typeface = calligraphy
     }
 
     /**
-     * A flat cream wash over the centre of the piece texture. The photograph has a strong
-     * specular highlight and turned rings that compete with the character; this keeps the
-     * wooden rim and quietens the face.
+     * Soft radial shading gives the jade discs depth without compromising the engraved glyphs.
      */
     private val pieceFacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(150, 242, 230, 205)
         style = Paint.Style.FILL
+    }
+
+    private val pieceSidePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val pieceHighlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
     }
 
     private val pieceOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -150,7 +157,7 @@ class BoardView @JvmOverloads constructor(
     }
 
     private val pieceShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(55, 0, 0, 0)
+        color = Color.argb(55, 55, 70, 43)
         style = Paint.Style.FILL
         maskFilter = BlurMaskFilter(6f, BlurMaskFilter.Blur.NORMAL)
     }
@@ -227,24 +234,11 @@ class BoardView @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
 
-    private var pieceBitmap: Bitmap? = null
     private var surfaceBitmap: Bitmap? = null
-    private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
 
     init {
         // BlurMaskFilter and shadow layers need software rendering.
         setLayerType(LAYER_TYPE_SOFTWARE, null)
-        loadPieceTexture()
-    }
-
-    private fun loadPieceTexture() {
-        try {
-            val pd = ContextCompat.getDrawable(context, R.drawable.piece_texture)
-            pieceBitmap = (pd as? BitmapDrawable)?.bitmap
-                ?: BitmapFactory.decodeResource(resources, R.drawable.piece_texture)
-        } catch (_: Exception) {
-            // Fall back to the code-drawn disc.
-        }
     }
 
     fun setBoard(newBoard: Board) {
@@ -374,8 +368,8 @@ class BoardView @JvmOverloads constructor(
         offsetX = paddingLeft + (boardWidth - cellSize * 8) / 2
         offsetY = paddingTop + (boardHeight - cellSize * 9) / 2
 
-        linePaint.strokeWidth = (cellSize * 0.022f).coerceAtLeast(1.5f)
-        thickLinePaint.strokeWidth = (cellSize * 0.045f).coerceAtLeast(3f)
+        linePaint.strokeWidth = (cellSize * 0.018f).coerceAtLeast(1.5f)
+        thickLinePaint.strokeWidth = (cellSize * 0.03f).coerceAtLeast(3f)
         markerPaint.strokeWidth = (cellSize * 0.025f).coerceAtLeast(1.5f)
         riverTextPaint.textSize = cellSize * 0.56f
         riverTextPaint.letterSpacing = 0.55f
@@ -421,11 +415,12 @@ class BoardView @JvmOverloads constructor(
             RectF(frame).apply { inset(2f, 2f) }, outerRadius - 2f, outerRadius - 2f, frameBevelPaint
         )
         c.drawRoundRect(inner, innerRadius, innerRadius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.argb(110, 40, 22, 8)
+            color = Color.argb(160, 166, 139, 89)
             style = Paint.Style.STROKE
             strokeWidth = 1.5f
         })
 
+        drawCornerInlays(c, inner)
         drawGrid(c)
         drawPalaceLines(c)
         drawPositionMarks(c)
@@ -434,53 +429,50 @@ class BoardView @JvmOverloads constructor(
         return bmp
     }
 
+    /** Translucent-looking jade with faint mineral veins; cached with the board geometry. */
     private fun drawWood(c: Canvas, r: RectF) {
-        // Planks: alternate light and dark bands across the width.
-        val bands = LinearGradient(
-            r.left, r.top, r.right, r.top,
-            intArrayOf(surfaceMid, surfaceLight, surfaceMid, surfaceLight, surfaceMid, surfaceLight, surfaceMid, surfaceMid),
-            floatArrayOf(0f, 0.14f, 0.3f, 0.45f, 0.58f, 0.72f, 0.88f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        c.drawRect(r, Paint(Paint.ANTI_ALIAS_FLAG).apply { shader = bands })
-
-        // Grain: deterministic wavy vertical strokes, mostly faint, a few darker streaks.
-        val rnd = Random(20260907L)
-        val path = Path()
-        val count = 110
-        for (i in 0 until count) {
-            val x0 = r.left + rnd.nextFloat() * r.width()
-            val dark = rnd.nextInt(9) == 0
-            grainPaint.color = grainColor
-            // Kept faint: the grain is texture, not something the eye should have to read past.
-            grainPaint.alpha = if (dark) 9 + rnd.nextInt(6) else 3 + rnd.nextInt(6)
-            grainPaint.strokeWidth = if (dark) 1.6f + rnd.nextFloat() * 1.4f else 0.8f + rnd.nextFloat() * 1.0f
-
-            path.reset()
-            path.moveTo(x0, r.top)
-            val segments = 6
-            val segH = r.height() / segments
-            var x = x0
-            for (s in 1..segments) {
-                val wobble = (rnd.nextFloat() - 0.5f) * cellSize * 0.08f
-                val nx = x0 + wobble
-                path.quadTo(x + (rnd.nextFloat() - 0.5f) * cellSize * 0.1f, r.top + segH * (s - 0.5f), nx, r.top + segH * s)
-                x = nx
-            }
-            c.drawPath(path, grainPaint)
+        val wash = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = LinearGradient(r.left, r.top, r.right, r.bottom,
+                intArrayOf(surfaceLight, surfaceMid, surfaceLight, surfaceDark), null, Shader.TileMode.CLAMP)
         }
+        c.drawRect(r, wash)
+        val random = Random(42L)
+        grainPaint.color = grainColor
+        grainPaint.alpha = 12
+        grainPaint.strokeWidth = cellSize * 0.016f
+        repeat(25) {
+            val x = r.left + random.nextFloat() * r.width()
+            val y = r.top + random.nextFloat() * r.height()
+            val vein = Path().apply {
+                moveTo(x, y)
+                cubicTo(x + cellSize, y - cellSize, x + cellSize * 2, y + cellSize,
+                    x + cellSize * 3, y + cellSize * 0.3f)
+            }
+            c.drawPath(vein, grainPaint)
+        }
+    }
 
-        // Soft vignette so the slab reads as a solid object rather than a flat fill.
-        val cx = r.centerX()
-        val cy = r.centerY()
-        val radius = maxOf(r.width(), r.height()) * 0.72f
-        val vignette = RadialGradient(
-            cx, cy, radius,
-            intArrayOf(Color.TRANSPARENT, Color.TRANSPARENT, Color.argb(40, 60, 30, 8)),
-            floatArrayOf(0f, 0.55f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        c.drawRect(r, Paint(Paint.ANTI_ALIAS_FLAG).apply { shader = vignette })
+    private fun drawCornerInlays(c: Canvas, bounds: RectF) {
+        val ink = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = lineColor
+            style = Paint.Style.STROKE
+            strokeWidth = cellSize * 0.02f
+            strokeJoin = Paint.Join.ROUND
+        }
+        for (corner in 0..3) {
+            c.save()
+            c.translate(if (corner % 2 == 0) bounds.left else bounds.right,
+                if (corner < 2) bounds.top else bounds.bottom)
+            c.scale(if (corner % 2 == 0) 1f else -1f, if (corner < 2) 1f else -1f)
+            val u = cellSize * 0.10f
+            val fret = Path().apply {
+                moveTo(u, 5 * u); lineTo(u, u); lineTo(5 * u, u)
+                moveTo(2 * u, 4 * u); lineTo(2 * u, 2 * u); lineTo(4 * u, 2 * u)
+                lineTo(4 * u, 3 * u); lineTo(3 * u, 3 * u)
+            }
+            c.drawPath(fret, ink)
+            c.restore()
+        }
     }
 
     private fun drawGrid(c: Canvas) {
@@ -660,48 +652,33 @@ class BoardView @JvmOverloads constructor(
             canvas.drawCircle(x + 3f, y + 5f, radius + 1f, pieceShadowPaint)
         }
 
-        val pbmp = pieceBitmap
-        if (pbmp != null) {
-            val src = Rect(0, 0, pbmp.width, pbmp.height)
-            val dst = RectF(x - radius, y - radius, x + radius, y + radius)
-            bitmapPaint.alpha = alpha
-            canvas.drawBitmap(pbmp, src, dst, bitmapPaint)
-            bitmapPaint.alpha = 255
-            pieceFacePaint.alpha = 150 * alpha / 255
-            canvas.drawCircle(x, y, radius * 0.8f, pieceFacePaint)
-        } else {
-            val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.argb(alpha, 160, 130, 95)
-                style = Paint.Style.FILL
-            }
-            canvas.drawCircle(x, y + 1.5f, radius, edgePaint)
-
-            val gradient = RadialGradient(
-                x - radius * 0.3f, y - radius * 0.3f, radius * 1.3f,
-                intArrayOf(
-                    Color.rgb(255, 250, 235),
-                    Color.rgb(245, 230, 200),
-                    Color.rgb(220, 195, 160),
-                    Color.rgb(175, 145, 110)
-                ),
-                floatArrayOf(0f, 0.3f, 0.65f, 1f),
-                Shader.TileMode.CLAMP
-            )
-            val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                shader = gradient
-                style = Paint.Style.FILL
-                this.alpha = alpha
-            }
-            canvas.drawCircle(x, y, radius, circlePaint)
-
-            pieceOutlinePaint.alpha = alpha
-            canvas.drawCircle(x, y, radius, pieceOutlinePaint)
-            pieceOutlinePaint.alpha = 255
-
-            pieceInnerRingPaint.alpha = (alpha * 80 / 255).coerceIn(0, 255)
-            canvas.drawCircle(x, y, radius * 0.72f, pieceInnerRingPaint)
-            pieceInnerRingPaint.alpha = 80
-        }
+        val jade = piece.color == PieceColor.BLACK
+        val face = if (jade) intArrayOf(Color.rgb(247, 250, 239), Color.rgb(224, 234, 211), Color.rgb(183, 202, 174))
+            else intArrayOf(Color.rgb(255, 253, 241), Color.rgb(243, 238, 218), Color.rgb(212, 202, 173))
+        val thickness = cellSize * 0.055f
+        pieceSidePaint.shader = LinearGradient(x, y, x, y + radius + thickness,
+            if (jade) Color.rgb(191, 210, 180) else Color.rgb(229, 220, 191),
+            if (jade) Color.rgb(115, 143, 111) else Color.rgb(163, 146, 110), Shader.TileMode.CLAMP)
+        pieceSidePaint.alpha = alpha
+        canvas.drawCircle(x, y + thickness, radius, pieceSidePaint)
+        pieceFacePaint.shader = RadialGradient(x - radius * 0.28f, y - radius * 0.35f,
+            radius * 1.6f, face, floatArrayOf(0f, 0.65f, 1f), Shader.TileMode.CLAMP)
+        pieceFacePaint.alpha = alpha
+        canvas.drawCircle(x, y, radius, pieceFacePaint)
+        pieceFacePaint.shader = null
+        pieceOutlinePaint.color = if (jade) Color.rgb(141, 162, 134) else Color.rgb(179, 157, 115)
+        pieceOutlinePaint.strokeWidth = cellSize * 0.025f
+        pieceOutlinePaint.alpha = alpha
+        canvas.drawCircle(x, y, radius * 0.95f, pieceOutlinePaint)
+        pieceHighlightPaint.color = Color.rgb(255, 255, 245)
+        pieceHighlightPaint.alpha = alpha * 220 / 255
+        pieceHighlightPaint.strokeWidth = cellSize * 0.026f
+        val rim = RectF(x - radius * 0.97f, y - radius * 0.97f, x + radius * 0.97f, y + radius * 0.97f)
+        canvas.drawArc(rim, 195f, 145f, false, pieceHighlightPaint)
+        pieceInnerRingPaint.color = if (jade) Color.rgb(136, 160, 126) else Color.rgb(175, 153, 112)
+        pieceInnerRingPaint.strokeWidth = cellSize * 0.018f
+        pieceInnerRingPaint.alpha = alpha * 150 / 255
+        canvas.drawCircle(x, y, radius * 0.79f, pieceInnerRingPaint)
 
         if (piece.type == PieceType.GENERAL && animatingMove == null && board.isInCheck(piece.color)) {
             canvas.drawCircle(x, y, radius + 4f, checkGlowPaint)

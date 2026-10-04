@@ -4,8 +4,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/chess_bg"
     tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/screenTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:fontFamily="@font/jade_chess_kai"
+        android:text="@string/jade_game_title"
+        android:textColor="@color/chess_text"
+        android:textSize="26sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Header: one card per side with its role, score and trophies; clock and mode between them.
          The side to move gets the accent stroke and a dot, so the header carries the turn on its own. -->
@@ -14,13 +27,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="6dp"
         android:layout_marginEnd="12dp"
         android:baselineAligned="false"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/screenTitle">
 
         <LinearLayout
             android:id="@+id/redCard"
@@ -30,7 +43,7 @@
             android:background="@drawable/player_card"
             android:orientation="vertical"
             android:paddingStart="12dp"
-            android:paddingTop="10dp"
+            android:paddingTop="8dp"
             android:paddingEnd="8dp"
             android:paddingBottom="8dp">
 
@@ -96,7 +109,7 @@
                 android:fontFamily="monospace"
                 android:text="00:00"
                 android:textColor="@color/chess_timer"
-                android:textSize="20sp" />
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/moveCountText"
@@ -128,7 +141,7 @@
             android:gravity="end"
             android:orientation="vertical"
             android:paddingStart="8dp"
-            android:paddingTop="10dp"
+            android:paddingTop="8dp"
             android:paddingEnd="12dp"
             android:paddingBottom="8dp">
 
@@ -473,22 +486,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/newGameButton"
-            style="@style/Widget.Chess.Button.Quiet"
-            android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_marginEnd="5dp"
-            android:layout_weight="1"
-            android:text="@string/new_game"
-            app:icon="@drawable/ic_add" />
-
+        <!-- New game lives in 更多: it ends the game on the board, so it is not a tap away. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/hintButton"
             style="@style/Widget.Chess.Button"
             android:layout_width="0dp"
             android:layout_height="60dp"
-            android:layout_marginStart="5dp"
             android:layout_marginEnd="5dp"
             android:layout_weight="1"
             android:text="@string/hint"

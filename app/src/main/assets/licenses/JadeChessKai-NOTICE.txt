@@ -1,0 +1,2 @@
+Jade Chess Kai is a renamed glyph subset of LXGW WenKai Regular, licensed under SIL OFL 1.1. The original license and copyright are in LXGWWenKai-OFL.txt. Source: https://github.com/lxgw/LxgwWenKai
+Used only for chess-piece glyphs, river labels, and the Xiangqi/Review page title.

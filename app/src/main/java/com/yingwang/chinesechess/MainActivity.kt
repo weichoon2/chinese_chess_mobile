@@ -105,7 +105,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var moveStrip: View
     private lateinit var replayBar: View
     private lateinit var replayProgressText: TextView
-    private lateinit var newGameButton: Button
     private lateinit var hintButton: Button
     private lateinit var undoButton: Button
     private lateinit var moreButton: Button
@@ -241,12 +240,10 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.replayEndButton).setOnClickListener { gameController.replayToEnd(); updateReplayBar() }
         findViewById<View>(R.id.replayExitButton).setOnClickListener { exitReplay() }
-        newGameButton = findViewById(R.id.newGameButton)
         hintButton = findViewById(R.id.hintButton)
         undoButton = findViewById(R.id.undoButton)
         moreButton = findViewById(R.id.moreButton)
 
-        newGameButton.setOnClickListener { confirmAbandonThen { showNewGameDialog() } }
         moreButton.setOnClickListener { showMoreDialog() }
 
         undoButton.setOnClickListener {
@@ -609,6 +606,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateGameModeDisplay() {
+        findViewById<TextView>(R.id.screenTitle).setText(if (gameController.isInReplayMode()) R.string.jade_review_title else R.string.jade_game_title)
         gameModeText.text = modeCaption()
         val (redRole, blackRole) = when (gameController.getGameMode()) {
             GameMode.PLAYER_VS_PLAYER -> R.string.role_player to R.string.role_player
@@ -1165,6 +1163,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMoreDialog() {
         val items = arrayOf(
+            getString(R.string.new_game),
             getString(if (isMuted) R.string.unmute else R.string.mute),
             getString(R.string.change_difficulty),
             getString(if (showEval) R.string.hide_eval else R.string.show_eval),
@@ -1179,14 +1178,15 @@ class MainActivity : AppCompatActivity() {
             .setTitle(R.string.more)
             .setAdapter(styledListAdapter(items)) { _, which ->
                 when (which) {
-                    0 -> toggleMute()
-                    1 -> changeDifficulty()
-                    2 -> toggleEval()
-                    3 -> startReview()
-                    4 -> toggleReplay()
-                    5 -> exportMoveHistory()
-                    6 -> showStatsDialog()
-                    7 -> showAboutDialog()
+                    0 -> confirmAbandonThen { showNewGameDialog() }
+                    1 -> toggleMute()
+                    2 -> changeDifficulty()
+                    3 -> toggleEval()
+                    4 -> startReview()
+                    5 -> toggleReplay()
+                    6 -> exportMoveHistory()
+                    7 -> showStatsDialog()
+                    8 -> showAboutDialog()
                 }
             }
             .show()

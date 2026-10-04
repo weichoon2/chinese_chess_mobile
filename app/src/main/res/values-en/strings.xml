@@ -193,4 +193,6 @@
     <string name="review_prev_mistake">Previous mistake</string>
     <string name="review_next_mistake">Next mistake</string>
     <string name="review_no_mistake">No more mistakes in this direction</string>
+    <string name="jade_game_title">Xiangqi</string>
+    <string name="jade_review_title">Review</string>
 </resources>

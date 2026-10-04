@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.3] - 2026-10-04
+
+### Changed
+- A new look, 青玉: moon-white paper and an ink-wash landscape behind a pale jade board with faint mineral veins and a champagne-gold inlay; panels and cards are lit from above; the system bars are light
+- Pieces are flat jade and cream discs with the characters in cinnabar red and ink black; the pieces, the river and a page title (对弈, or 复盘 in a review) are set in a Kai subset of LXGW WenKai (SIL OFL 1.1, renamed Jade Chess Kai; licence in `assets/licenses/`)
+- New game has moved from the bottom bar into 更多, as its first item
+- The background bamboo is kept faint so it does not sit under the status bar
+
 ## [2.4.2] - 2026-10-04
 
 ### Added

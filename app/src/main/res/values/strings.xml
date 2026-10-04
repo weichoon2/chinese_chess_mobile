@@ -193,4 +193,6 @@
     <string name="review_prev_mistake">上一处失误</string>
     <string name="review_next_mistake">下一处失误</string>
     <string name="review_no_mistake">这个方向没有更多失误</string>
+    <string name="jade_game_title">对弈</string>
+    <string name="jade_review_title">复盘</string>
 </resources>

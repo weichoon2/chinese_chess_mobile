@@ -46,3 +46,6 @@ ml/data/wukong/
 # Play signs with its own key; the upload certificate is a public cert, but there is no
 # reason to carry it in a public repository.
 play_store_assets/upload_certificate.pem
+
+# Design working files (reference screenshots, the full source font): not part of the app
+design-review/
