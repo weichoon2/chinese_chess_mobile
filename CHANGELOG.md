@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.5] - 2026-10-04
+
+### Added
+- A dark theme, 墨玉夜山: the ink landscape tinted night green, a dark jade board with gold lines, and the same light pieces with cinnabar and ink characters
+- 界面主题 in 更多: light, dark, or following the system (the default). Switching keeps the game, a review in progress and the AI's thinking; the activity rebuilds its views itself instead of restarting
+
 ## [2.4.4] - 2026-10-04
 
 ### Fixed

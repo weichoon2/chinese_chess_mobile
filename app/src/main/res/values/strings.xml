@@ -195,4 +195,8 @@
     <string name="review_no_mistake">这个方向没有更多失误</string>
     <string name="jade_game_title">对弈</string>
     <string name="jade_review_title">复盘</string>
+    <string name="theme_title">界面主题</string>
+    <string name="theme_light">月白青玉 · 浅色</string>
+    <string name="theme_dark">墨玉夜山 · 深色</string>
+    <string name="theme_system">跟随系统</string>
 </resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The night table: the same ink landscape as the day, tinted to night green and shaded so
+     the panels and board read on it. Colours are in values-night/colors.xml. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap
+            android:filter="true"
+            android:gravity="fill"
+            android:src="@drawable/jade_landscape"
+            android:tint="@color/chess_landscape_tint"
+            android:tintMode="multiply" />
+    </item>
+    <item>
+        <shape>
+            <gradient
+                android:angle="270"
+                android:centerColor="@color/chess_landscape_shade_mid"
+                android:endColor="@color/chess_landscape_shade_bottom"
+                android:startColor="@color/chess_landscape_shade_top" />
+        </shape>
+    </item>
+</layer-list>

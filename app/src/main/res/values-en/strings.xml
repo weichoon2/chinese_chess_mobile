@@ -195,4 +195,8 @@
     <string name="review_no_mistake">No more mistakes in this direction</string>
     <string name="jade_game_title">Xiangqi</string>
     <string name="jade_review_title">Review</string>
+    <string name="theme_title">Appearance</string>
+    <string name="theme_light">Moon Jade · Light</string>
+    <string name="theme_dark">Night Jade · Dark</string>
+    <string name="theme_system">Follow system</string>
 </resources>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 墨玉夜山, the dark counterpart of 青玉: night-green jade, pale celadon text and a
+         gold inlay; the pieces keep their cinnabar and ink characters on light discs. -->
+    <color name="chess_bg">#13221F</color>
+    <color name="chess_panel">#22372F</color>
+    <!-- Panels, cards and the status pill fall from a lit top edge to the panel colour. -->
+    <color name="chess_panel_top">#2C443A</color>
+    <color name="chess_panel_bottom">#1B3029</color>
+    <!-- The table under everything, lit from above. -->
+    <color name="chess_table_top">#253B33</color>
+    <color name="chess_table_mid">#182C25</color>
+    <color name="chess_table_bottom">#102019</color>
+    <!-- The landscape behind the table, tinted to night and shaded from the top. -->
+    <color name="chess_landscape_tint">#30483C</color>
+    <color name="chess_landscape_shade_top">#3012221F</color>
+    <color name="chess_landscape_shade_mid">#5012221F</color>
+    <color name="chess_landscape_shade_bottom">#70102019</color>
+    <color name="chess_panel_stroke">#66725C</color>
+    <color name="chess_text">#E8ECDE</color>
+    <color name="chess_text_secondary">#B3C2AE</color>
+    <color name="chess_accent">#C9DAB9</color>
+    <color name="chess_on_accent">#183327</color>
+    <color name="chess_red_side">#E79B8A</color>
+    <color name="chess_black_side">#DCE9D0</color>
+    <color name="chess_timer">#E8ECDE</color>
+    <color name="chess_button_bg">#2E493D</color>
+    <color name="chess_button_text">#E8ECDE</color>
+    <color name="chess_button_ripple">#33DCE9D0</color>
+    <color name="chess_dialog_bg">#20362D</color>
+    <color name="chess_dialog_stroke">#809272</color>
+    <color name="chess_dialog_title">#D9DFBE</color>
+    <color name="chess_history_text">#D8E2CE</color>
+    <color name="chess_turn_red">#E79B8A</color>
+    <color name="chess_turn_black">#DCE9D0</color>
+    <color name="chess_card_bg">#22372F</color>
+    <color name="chess_card_stroke">#526A54</color>
+    <color name="chess_card_active_stroke">#BFCCA4</color>
+    <color name="chess_captured_bg">#2E493D</color>
+    <color name="chess_captured_stroke">#71866A</color>
+    <color name="chess_piece_red_ink">#A52E2B</color>
+    <color name="chess_piece_black_ink">#202C2A</color>
+
+    <!-- The board is drawn in code from these tokens; there is no photograph any more. -->
+    <color name="board_surface_light">#3A5144</color>
+    <color name="board_surface_mid">#2C4437</color>
+    <color name="board_surface_dark">#1D3529</color>
+    <color name="board_grain">#A7BE9B</color>
+    <color name="board_line">#B7A67D</color>
+    <color name="board_frame">#65775E</color>
+    <color name="board_frame_light">#B6C3A2</color>
+    <color name="board_river">#C5D0B8</color>
+    <color name="board_coord">#B9C6AD</color>
+</resources>

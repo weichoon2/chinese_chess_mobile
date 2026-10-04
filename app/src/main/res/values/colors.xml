@@ -10,6 +10,12 @@
     <color name="chess_table_top">#F6F5EE</color>
     <color name="chess_table_mid">#F2F1E9</color>
     <color name="chess_table_bottom">#E7EBE1</color>
+    <!-- Only the night table tints and shades the landscape (drawable-night); by day these
+         leave it as painted. -->
+    <color name="chess_landscape_tint">#FFFFFF</color>
+    <color name="chess_landscape_shade_top">#00000000</color>
+    <color name="chess_landscape_shade_mid">#00000000</color>
+    <color name="chess_landscape_shade_bottom">#00000000</color>
     <color name="chess_panel_stroke">#C9C5AE</color>
     <color name="chess_text">#223F3C</color>
     <color name="chess_text_secondary">#586B61</color>

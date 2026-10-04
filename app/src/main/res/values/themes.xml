@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Every colour comes from values/colors.xml, so a palette is one file. -->
-    <style name="Theme.ChineseChess" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.ChineseChess" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/chess_accent</item>
         <item name="colorPrimaryDark">@color/chess_bg</item>
         <item name="colorAccent">@color/chess_accent</item>

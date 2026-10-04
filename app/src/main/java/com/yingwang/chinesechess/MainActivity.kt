@@ -4,6 +4,7 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.content.res.Configuration
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
@@ -26,6 +27,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
@@ -114,22 +116,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var audioManager: GameAudioManager
     private lateinit var gameController: GameController
     private var thinkingAnimator: AnimatorSet? = null
+    private var aiThinking = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The ground colour comes from the palette, not from day/night mode, so the bar
-        // icons follow a palette flag rather than the system setting.
-        if (resources.getBoolean(R.bool.chess_light_system_bars)) {
-            enableEdgeToEdge(
-                statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-                navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
-            )
-        } else {
-            enableEdgeToEdge(
-                statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-                navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
-            )
-        }
+        delegate.localNightMode = settings.getInt("appearance_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         super.onCreate(savedInstanceState)
+        updateSystemBarAppearance()
         setContentView(R.layout.activity_main)
 
         val rootView = findViewById<View>(android.R.id.content)
@@ -188,6 +180,67 @@ class MainActivity : AppCompatActivity() {
         if (gameController.getMoveHistory().isNotEmpty()) {
             gameController.saveGame(this)
         }
+    }
+
+    private fun updateSystemBarAppearance() {
+        val light = resources.getBoolean(R.bool.chess_light_system_bars)
+        enableEdgeToEdge(
+            statusBarStyle = if (light) SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT) else SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = if (light) SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT) else SystemBarStyle.dark(Color.TRANSPARENT)
+        )
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (!::gameController.isInitialized) return
+        // Keep the controller, unfinished study and replay position alive when changing theme.
+        thinkingAnimator?.cancel()
+        setTheme(R.style.Theme_ChineseChess)
+        window.setBackgroundDrawableResource(R.drawable.chess_table_background)
+        updateSystemBarAppearance()
+        setContentView(R.layout.activity_main)
+        val root = findViewById<View>(android.R.id.content)
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(root)
+        initViews()
+        setupGameControllerCallbacks()
+        boardView.setBoard(gameController.getCurrentBoard())
+        if (gameController.isInReplayMode()) gameController.replayGoTo(gameController.getReplayIndex())
+        else boardView.highlightMove(gameController.getMoveHistory().lastOrNull())
+        lastStats?.let { updateGameStats(it) }
+        evalBar.setEvaluation(evaluation?.cpRed, evaluation?.mateRed)
+        currentReview()?.let { analysis ->
+            reviewGraph.setData(analysis.evals.map { it?.let { value -> value.cpRed to value.mateRed } },
+                reviewMarks(analysis), analysis.mistake?.index, gameController.getReplayIndex())
+        }
+        updateGameModeDisplay()
+        updateReplayBar()
+        updateStatus()
+        if (aiThinking) {
+            aiThinkingIndicator.visibility = View.VISIBLE
+            startThinkingAnimation()
+            undoButton.isEnabled = false
+            hintButton.isEnabled = false
+            statusText.setText(R.string.ai_thinking)
+        }
+    }
+
+    private fun showThemeDialog() {
+        val modes = intArrayOf(AppCompatDelegate.MODE_NIGHT_NO, AppCompatDelegate.MODE_NIGHT_YES,
+            AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        val selected = modes.indexOf(settings.getInt("appearance_mode", modes[2])).coerceAtLeast(0)
+        AlertDialog.Builder(this, R.style.ChessDialogTheme)
+            .setTitle(R.string.theme_title)
+            .setSingleChoiceItems(arrayOf(getString(R.string.theme_light), getString(R.string.theme_dark),
+                getString(R.string.theme_system)), selected) { dialog, index ->
+                dialog.dismiss()
+                settings.edit().putInt("appearance_mode", modes[index]).apply()
+                delegate.localNightMode = modes[index]
+            }.setNegativeButton(R.string.cancel, null).show()
     }
 
     private fun initViews() {
@@ -321,6 +374,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         gameController.onAIThinking = { isThinking ->
+            aiThinking = isThinking
             runOnUiThread {
                 aiThinkingIndicator.visibility = if (isThinking) View.VISIBLE else View.GONE
                 if (isThinking) startThinkingAnimation() else stopThinkingAnimation()
@@ -1174,7 +1228,8 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.replay_title),
             getString(R.string.export),
             getString(R.string.my_stats),
-            getString(R.string.about)
+            getString(R.string.about),
+            getString(R.string.theme_title)
         )
 
         AlertDialog.Builder(this, R.style.ChessDialogTheme)
@@ -1190,6 +1245,7 @@ class MainActivity : AppCompatActivity() {
                     6 -> exportMoveHistory()
                     7 -> showStatsDialog()
                     8 -> showAboutDialog()
+                    9 -> showThemeDialog()
                 }
             }
             .show()
