@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mistakes and blunders are named only when a depth-12 search before and after the move agrees; other moves get the engine's move, not a verdict. 最佳 and 缓着 are gone
 - The review shows how many positions it has searched, and checked
 - Leaving a review stops its analysis, and the analysis takes the engine one position at a time, so a game picked up again never waits for a whole review
+- 上一处失误 / 下一处失误 in the review panel jump between the marked moves
+- Captured pieces are listed on each card as one line of text grouped by kind (車×2  炮  卒×3), in the colour of the side they belonged to
+- A review of a game still in progress ends on 当前局面 rather than 终局
 
 ## [2.4.1] - 2026-10-03
 

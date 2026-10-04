@@ -1,0 +1,10 @@
+[
+ {
+  "language": "en-US",
+  "text": "The game is analysed while you think, so a review opens faster and looks deeper, without slowing the AI. Stopping on a move in a review gives it a two-second look for a more reliable suggestion, and mistakes and blunders are named only after a deeper search confirms them. New buttons jump between mistakes. Captured pieces are listed as one line of text, so all sixteen fit. Leaving a review stops its analysis at once."
+ },
+ {
+  "language": "zh-CN",
+  "text": "边下边分析：你思考的时候，引擎在后台分析已经走过的局面，复盘打开更快、算得更深，电脑走棋不受影响。复盘时停在某一步，会对这一步做两秒深算，给出更可靠的推荐；只有经过更深搜索复核的步子才会标为「失误」或「败着」。新增「上一处失误」「下一处失误」，可以直接跳转。吃掉的子改为一行文字，十六个子也放得下。退出复盘会立即中断分析。"
+ }
+]
