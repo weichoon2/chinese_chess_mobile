@@ -60,15 +60,19 @@
     <string name="show_eval">显示形势分</string>
     <string name="hide_eval">隐藏形势分</string>
     <string name="review_move">第%1$d回合 %2$s走%3$s</string>
-    <string name="review_tag_best">最佳</string>
-    <string name="review_tag_inaccuracy">缓着</string>
     <string name="review_tag_mistake">失误</string>
     <string name="review_tag_blunder">败着</string>
-    <string name="review_better">推荐%1$s（见箭头）</string>
+    <string name="review_better">引擎推荐%1$s（见箭头）</string>
     <string name="review_swing">形势 %1$s → %2$s</string>
     <string name="review_end">终局 · %1$s</string>
     <string name="graph_red_tick">红+%1$d</string>
     <string name="graph_black_tick">黑+%1$d</string>
+    <string name="review_same">与引擎推荐一致</string>
+    <string name="review_same_deep">与深算推荐一致</string>
+    <string name="review_better_deep">深算推荐%1$s（见箭头）</string>
+    <string name="review_deep_running">深算中…</string>
+    <string name="review_progress">正在分析这一局… %1$d/%2$d</string>
+    <string name="review_verifying">正在复核疑似失误… %1$d/%2$d</string>
     <string name="review_running">正在分析这一局…</string>
     <string name="review_none">这一局没有明显的失误。</string>
 

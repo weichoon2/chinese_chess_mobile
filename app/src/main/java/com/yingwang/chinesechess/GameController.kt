@@ -116,6 +116,8 @@ class GameController(
 
     fun startNewGame() {
         gameGeneration++
+        interruptBackground()
+        notes.clear()
         gameOver = false
         replayMode = false
         endgame = null
@@ -243,6 +245,8 @@ class GameController(
 
     fun makeAIMove() {
         if (board.isCheckmate() || board.isStalemate()) return
+        // The AI's turn comes before looking back over the game.
+        interruptBackground()
 
         onAIThinking?.invoke(true)
 
@@ -458,6 +462,8 @@ class GameController(
         repeat(movesToUndo.coerceAtMost(moveHistory.size)) {
             moveHistory.removeAt(moveHistory.size - 1)
         }
+        interruptBackground()
+        notes.keys.removeAll { it > moveHistory.size }
 
         // Rebuild board and captured pieces from history
         board = initialBoard.copy()
@@ -490,6 +496,8 @@ class GameController(
 
     fun startEndgame(study: EndgameStudy) {
         gameGeneration++
+        interruptBackground()
+        notes.clear()
         gameOver = false
         replayMode = false
         endgame = study
@@ -555,6 +563,7 @@ class GameController(
         // The game holds still while it is looked at: an AI move in flight is dropped and an
         // AI-vs-AI game pauses, so the moves under review do not change (see exitReplayMode).
         gameGeneration++
+        interruptBackground()
         replayMode = true
         replayMoves = moveHistory.toList()
         replayIndex = replayMoves.size
@@ -569,6 +578,7 @@ class GameController(
         onBoardUpdated?.invoke(board)
         // Pick the game up where it stopped: the AI moves on if it is its turn.
         if (!gameOver && !board.isCheckmate() && !board.isStalemate() && shouldAIMove()) makeAIMove()
+        else scheduleBackgroundAnalysis()
     }
 
     fun isInReplayMode() = replayMode
@@ -659,6 +669,8 @@ class GameController(
             blackCapturedPieces = blackCapturedPieces.toList()
         )
         onStatsUpdated?.invoke(stats)
+        // Every change to the game ends here; the engine can look back while the player thinks.
+        scheduleBackgroundAnalysis()
     }
 
     fun saveGame(context: Context): Boolean {
@@ -700,6 +712,8 @@ class GameController(
 
     fun loadGame(context: Context): Boolean {
         gameGeneration++
+        interruptBackground()
+        notes.clear()
         gameOver = false
         try {
             val prefs = context.getSharedPreferences("chess_save", Context.MODE_PRIVATE)
@@ -770,10 +784,13 @@ class GameController(
         /** Floor on how long an AI move appears to take, so replies never look instant. */
         private const val MIN_THINK_MS = 900L
 
-        /** Depth for scoring each position of a finished game, and for the better move. */
+        /** Depth for scoring each position of a finished game, and for checking its mistakes. */
         private const val REVIEW_DEPTH = 8
         private const val REVIEW_BEST_DEPTH = 12
-        /** A move that loses less than this is not called a mistake. */
+        /** At most this many suspected mistakes are checked at [REVIEW_BEST_DEPTH], worst first. */
+        private const val REVIEW_VERIFY_LIMIT = 6
+        /** How long the engine looks at a position the player stops on in a review, as for a hint. */
+        private const val DEEP_LOOK_MS = 2000L
 
         /** Search depth for the defending side of an endgame study. */
         private const val ENDGAME_DEFENCE_DEPTH = 12
@@ -800,83 +817,211 @@ class GameController(
         prefs.edit().remove("saved_game").apply()
     }
 
+    // ── Analysis while the game is played ──
+    // While the player thinks the engine would sit idle, so it looks at the positions of the game
+    // instead, newest first, at the depth the review checks mistakes with. The review afterwards
+    // then has most positions ready, and deeper than a review from scratch could afford. The AI's
+    // turn, a hint, a replay and leaving the app all come first: the search in hand is stopped
+    // and the engine handed over at once.
+
+    /** Search results by the number of moves played before the position. */
+    private val notes = mutableMapOf<Int, Pair<PikafishEngine.Score?, Move?>>()
+    private var backgroundJob: Job? = null
+    private var backgroundSearching = false
+    private var backgroundAllowed = true
+
+    /** Called as the app goes to the background and comes back. */
+    fun setBackgroundAnalysisAllowed(allowed: Boolean) {
+        backgroundAllowed = allowed
+        if (allowed) scheduleBackgroundAnalysis() else interruptBackground()
+    }
+
+    private fun positionAfter(index: Int): Board {
+        val position = initialBoard.copy()
+        for (i in 0 until index.coerceAtMost(moveHistory.size)) position.makeMoveInPlace(moveHistory[i])
+        return position
+    }
+
+    private fun scheduleBackgroundAnalysis() {
+        if (!backgroundAllowed || replayMode || backgroundJob?.isActive == true) return
+        backgroundJob = coroutineScope.launch {
+            while (isActive) {
+                if (replayMode || (!gameOver && shouldAIMove())) break
+                val index = (moveHistory.size downTo 0).firstOrNull { it !in notes } ?: break
+                val generation = gameGeneration
+                val position = positionAfter(index)
+                val result = if (position.isCheckmate()) PikafishEngine.Score(cp = null, mate = 0) to null
+                else engineMutex.withLock {
+                    val engine = ensurePikafish() ?: return@withLock null
+                    backgroundSearching = true
+                    try {
+                        engine.analyse(position, depth = REVIEW_BEST_DEPTH)
+                    } finally {
+                        backgroundSearching = false
+                    }
+                } ?: break
+                if (generation == gameGeneration && index <= moveHistory.size) notes[index] = result
+            }
+        }
+    }
+
+    /** Hands the engine back at once: stops the background search in hand and the loop. */
+    private fun interruptBackground() {
+        val job = backgroundJob ?: return
+        backgroundJob = null
+        if (job.isActive) {
+            job.cancel()
+            if (backgroundSearching) pikafishEngine?.stopSearch()
+        }
+    }
+
     /**
      * The move by [player] that cost the most, judged by the engine, with what it should
      * have been. [delta] is how far the position fell in centipawns from the player's side.
      */
     data class Mistake(val index: Int, val played: Move, val better: Move?, val before: Evaluation?, val after: Evaluation?, val delta: Int)
 
-    /** Red-side readings and the engine's move for every position, what each move cost, and the player's costliest move. */
+    /**
+     * Red-side readings and the engine's move for every position of a game, the moves a deeper
+     * search confirmed as mistakes or blunders, and the player's costliest move among those.
+     */
     data class Analysis(
         val evals: List<Evaluation?>,
         /** The engine's choice in each position (none in the last). */
         val best: List<Move?>,
-        /** What each move cost its player as a share of the game (Review.cost). */
-        val costs: List<Double?>,
+        /** Moves confirmed by the deeper search, by the index of the position they were played from. */
+        val verdicts: Map<Int, Review.Verdict>,
         val mistake: Mistake?
     )
 
+    private var analysisJob: Job? = null
+
+    /** Stops a review in progress, so the game it belongs to can have the engine back. */
+    fun cancelAnalysis() {
+        analysisJob?.cancel()
+        analysisJob = null
+    }
+
     /**
-     * Scores every position of the game at a shallow depth, for the graph of how it went,
-     * and finds the [player]'s move with the largest drop (none when no move lost more than
-     * [Review.MISTAKE], or when [player] is null). Null when the engine is unavailable.
-     * Runs off the main thread; [onDone] is called on it.
+     * Searches one position, taking the engine for that search alone, so a game picked up again
+     * meanwhile (or a hint) waits for one search at most, never for a whole review. Null when
+     * the engine is unavailable.
      */
-    fun analyzeGame(player: PieceColor?, onDone: (Analysis?) -> Unit) {
+    private suspend fun searchPosition(position: Board, depth: Int = 0, moveTimeMs: Long = 0): Pair<PikafishEngine.Score?, Move?>? {
+        if (position.isCheckmate()) return PikafishEngine.Score(cp = null, mate = 0) to null
+        return engineMutex.withLock {
+            val engine = ensurePikafish() ?: return@withLock null
+            engine.analyse(position, depth, moveTimeMs)
+        }
+    }
+
+    /**
+     * Reviews the game on the board. Every position is searched at [REVIEW_DEPTH] for the graph
+     * and the engine's move; a search that shallow is good to a few percent of the game, so the
+     * moves it takes for mistakes (the [player]'s, or both sides' when [player] is null) are
+     * searched again at [REVIEW_BEST_DEPTH], before and after, and only those the deeper look
+     * agrees on are named. [onProgress] reports each search, [onDone] the result (null when the
+     * engine is unavailable); neither is called once [cancelAnalysis] has stopped the review.
+     * Both run off the main thread.
+     */
+    fun analyzeGame(
+        player: PieceColor?,
+        onProgress: (verifying: Boolean, done: Int, total: Int) -> Unit,
+        onDone: (Analysis?) -> Unit
+    ) {
+        cancelAnalysis()
+        interruptBackground()
         val moves = moveHistory.toList()
         val start = initialBoard.copy()
-        coroutineScope.launch {
-            val analysis = engineMutex.withLock {
-                val engine = ensurePikafish() ?: return@withLock null
-                // makeMove keeps the side to move (it is for trying moves out); these need the turn to pass.
-                val positions = mutableListOf(start.copy())
-                for (m in moves) positions.add(positions.last().copy().also { it.makeMoveInPlace(m) })
-                // Score of each position for its side to move, and the move the search preferred.
-                val searched = positions.map { pos ->
-                    if (pos.isCheckmate()) PikafishEngine.Score(cp = null, mate = 0) to null
-                    else engine.analyse(pos, depth = REVIEW_DEPTH)
-                }
-                val scores = searched.map { it.first }
-                val evals = scores.mapIndexed { i, sc ->
-                    if (sc?.mate == 0) {
-                        // The side to move is mated: a decided game for the other side.
-                        Evaluation(cpRed = null, mateRed = if (positions[i].currentPlayer == PieceColor.RED) -1 else 1)
-                    } else toRedPerspective(sc, positions[i].currentPlayer)
-                }
-                // What each move cost its player, as a share of the game (see Review).
-                val costs = moves.indices.map { i ->
-                    val before = scores[i]
-                    val after = scores[i + 1]
-                    if (before == null || after == null) null else Review.cost(before, after)
-                }
+        // Positions already looked at while the game was played need no search now.
+        val noted = notes.toMap()
+        analysisJob = coroutineScope.launch {
+            // makeMove keeps the side to move (it is for trying moves out); these need the turn to pass.
+            val positions = mutableListOf(start.copy())
+            for (m in moves) positions.add(positions.last().copy().also { it.makeMoveInPlace(m) })
 
-                // The costliest move is the one that lost the most of the player's share of the
-                // game, not the most centipawns: in a lost game the biggest centipawn drops come
-                // after the game was already gone.
-                val worst = if (player == null) null else moves.indices
-                    .filter { moves[it].piece.color == player && costs[it] != null }
-                    .maxByOrNull { costs[it]!! }
-                val mistake = worst?.takeIf { costs[it]!! >= Review.MISTAKE }?.let { index ->
-                    // After the move it is the opponent's turn, so their score is the player's loss.
-                    val delta = WeakPlay.comparable(scores[index]!!) + WeakPlay.comparable(scores[index + 1]!!)
-                    val better = engine.findBestMove(positions[index], depth = REVIEW_BEST_DEPTH)
-                    Mistake(
-                        index = index,
-                        played = moves[index],
-                        better = better?.takeIf { it.from != moves[index].from || it.to != moves[index].to },
-                        before = evals[index],
-                        after = evals[index + 1],
-                        delta = delta
-                    )
+            val scores = ArrayList<PikafishEngine.Score?>(positions.size)
+            val best = ArrayList<Move?>(positions.size)
+            val deep = BooleanArray(positions.size) { it in noted }
+            val missing = positions.indices.count { !deep[it] }
+            var searched = 0
+            for ((i, position) in positions.withIndex()) {
+                val (score, move) = noted[i] ?: searchPosition(position, depth = REVIEW_DEPTH) ?: run {
+                    onDone(null)
+                    return@launch
                 }
-                // The deeper search's choice stands for the costliest move, so the arrow there
-                // and the line under the board agree.
-                val best = searched.mapIndexed { i, (_, move) ->
-                    if (mistake != null && i == mistake.index && mistake.better != null) mistake.better else move
-                }
-                Analysis(evals, best, costs, mistake)
+                scores.add(score)
+                best.add(move)
+                if (!deep[i]) onProgress(false, ++searched, missing)
             }
-            onDone(analysis)
+
+            // What each move cost its player, as a share of the game (see Review): judged by the
+            // share, not centipawns, because in a lost game the biggest centipawn drops come
+            // after the game was already gone.
+            fun cost(i: Int): Double? {
+                val before = scores[i] ?: return null
+                val after = scores[i + 1] ?: return null
+                return Review.cost(before, after)
+            }
+            val suspects = moves.indices
+                .filter { i -> (player == null || moves[i].piece.color == player) && (cost(i) ?: 0.0) >= Review.MISTAKE }
+                .sortedByDescending { cost(it) }
+                .take(REVIEW_VERIFY_LIMIT)
+            val verdicts = mutableMapOf<Int, Review.Verdict>()
+            val confirmed = mutableMapOf<Int, Double>()
+            for ((k, i) in suspects.withIndex()) {
+                if (!deep[i]) {
+                    val before = searchPosition(positions[i], depth = REVIEW_BEST_DEPTH) ?: break
+                    before.first?.let { scores[i] = it }
+                    before.second?.let { best[i] = it }
+                    deep[i] = true
+                }
+                if (!deep[i + 1]) {
+                    val after = searchPosition(positions[i + 1], depth = REVIEW_BEST_DEPTH) ?: break
+                    after.first?.let { scores[i + 1] = it }
+                    deep[i + 1] = true
+                }
+                onProgress(true, k + 1, suspects.size)
+                val c = cost(i) ?: continue
+                val verdict = Review.verdict(c)
+                if (verdict == Review.Verdict.MISTAKE || verdict == Review.Verdict.BLUNDER) {
+                    verdicts[i] = verdict
+                    confirmed[i] = c
+                }
+            }
+
+            val evals = scores.mapIndexed { i, sc ->
+                if (sc?.mate == 0) {
+                    // The side to move is mated: a decided game for the other side.
+                    Evaluation(cpRed = null, mateRed = if (positions[i].currentPlayer == PieceColor.RED) -1 else 1)
+                } else toRedPerspective(sc, positions[i].currentPlayer)
+            }
+            val worst = if (player == null) null else confirmed.maxByOrNull { it.value }?.key
+            val mistake = worst?.let { index ->
+                // After the move it is the opponent's turn, so their score is the player's loss.
+                val delta = WeakPlay.comparable(scores[index]!!) + WeakPlay.comparable(scores[index + 1]!!)
+                Mistake(
+                    index = index,
+                    played = moves[index],
+                    better = best[index]?.takeIf { it.from != moves[index].from || it.to != moves[index].to },
+                    before = evals[index],
+                    after = evals[index + 1],
+                    delta = delta
+                )
+            }
+            onDone(Analysis(evals, best, verdicts, mistake))
+        }
+    }
+
+    /**
+     * A longer look at the position after [index] moves of the game being replayed, as long as
+     * a hint takes: the engine's move there. Null when the engine is unavailable.
+     */
+    fun deepLook(index: Int, onDone: (Move?) -> Unit): Job {
+        val position = initialBoard.copy()
+        for (i in 0 until index.coerceAtMost(moveHistory.size)) position.makeMoveInPlace(moveHistory[i])
+        return coroutineScope.launch {
+            onDone(searchPosition(position, moveTimeMs = DEEP_LOOK_MS)?.second)
         }
     }
 
@@ -887,15 +1032,20 @@ class GameController(
         }
 
         onAIThinking?.invoke(true)
+        interruptBackground()
         coroutineScope.launch {
             try {
                 val sideToMove = board.currentPlayer
+                val index = moveHistory.size
+                val generation = gameGeneration
                 val fromEngine = engineMutex.withLock {
                     val engine = ensurePikafish() ?: return@withLock null
                     val move = engine.findBestMove(board, moveTimeMs = 2000)
                     if (move != null) move to engine.lastScore else null
                 }
                 if (fromEngine != null) {
+                    // A hint is as deep a look as the review takes; keep it for the review.
+                    if (generation == gameGeneration && index == moveHistory.size) notes[index] = fromEngine.second to fromEngine.first
                     onEvaluationUpdated?.invoke(toRedPerspective(fromEngine.second, sideToMove))
                     callback(fromEngine.first)
                 } else {
@@ -903,6 +1053,7 @@ class GameController(
                 }
             } finally {
                 onAIThinking?.invoke(false)
+                scheduleBackgroundAnalysis()
             }
         }
     }

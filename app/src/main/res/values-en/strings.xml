@@ -62,8 +62,6 @@
     <string name="show_eval">Show evaluation</string>
     <string name="hide_eval">Hide evaluation</string>
     <string name="review_move">Move %1$d: %2$s plays %3$s</string>
-    <string name="review_tag_best">Best</string>
-    <string name="review_tag_inaccuracy">Inaccuracy</string>
     <string name="review_tag_mistake">Mistake</string>
     <string name="review_tag_blunder">Blunder</string>
     <string name="review_better">Engine prefers %1$s (arrow)</string>
@@ -71,6 +69,12 @@
     <string name="review_end">Final position · %1$s</string>
     <string name="graph_red_tick">R+%1$d</string>
     <string name="graph_black_tick">B+%1$d</string>
+    <string name="review_same">Same as the engine</string>
+    <string name="review_same_deep">Same as the engine on a longer look</string>
+    <string name="review_better_deep">On a longer look the engine prefers %1$s (arrow)</string>
+    <string name="review_deep_running">looking deeper…</string>
+    <string name="review_progress">Looking over the game… %1$d/%2$d</string>
+    <string name="review_verifying">Checking possible mistakes… %1$d/%2$d</string>
     <string name="review_running">Looking over the game…</string>
     <string name="review_none">No clear mistakes in this game.</string>
 

@@ -195,12 +195,15 @@ class PikafishEngine(private val context: Context) : Closeable {
         lastScore
     }
 
-    /** The score at [depth] for the side to move, and the move the search settled on. */
-    suspend fun analyse(board: Board, depth: Int): Pair<Score?, Move?> = withContext(Dispatchers.IO) {
+    /**
+     * The score for the side to move and the move the search settled on, searching to [depth]
+     * or, when [moveTimeMs] is set, for that long instead.
+     */
+    suspend fun analyse(board: Board, depth: Int = 0, moveTimeMs: Long = 0): Pair<Score?, Move?> = withContext(Dispatchers.IO) {
         if (!isReady) return@withContext null to null
         lastScore = null
         sendCommand("position fen ${boardToFen(board)}")
-        sendCommand("go depth $depth")
+        sendCommand(if (moveTimeMs > 0) "go movetime $moveTimeMs" else "go depth $depth")
         val uci = readUntilBestMove()
         lastScore to uci?.takeIf { it != "(none)" }?.let { uciToMove(it, board) }
     }

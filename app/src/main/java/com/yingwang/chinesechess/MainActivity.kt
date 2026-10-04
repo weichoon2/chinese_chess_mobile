@@ -60,6 +60,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_SHOW_EVAL = "show_eval"
         /** Room the board leaves under itself for the move strip (activity_main.xml). */
         private const val BOARD_RESERVE_DP = 56
+        /** How long the player stays on a review position before the engine takes a longer look. */
+        private const val DEEP_LOOK_DELAY_MS = 600L
     }
 
     private lateinit var boardView: BoardView
@@ -98,6 +100,7 @@ class MainActivity : AppCompatActivity() {
     private var review: GameController.Analysis? = null
     private var reviewedMoves: List<com.yingwang.chinesechess.model.Move>? = null
     private var reviewRunning = false
+    private var reviewProgress: String? = null
 
     private lateinit var moveHistoryText: TextView
     private lateinit var moveStrip: View
@@ -175,11 +178,14 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (!isMuted) audioManager.startBackgroundMusic()
+        gameController.setBackgroundAnalysisAllowed(true)
     }
 
     override fun onPause() {
         super.onPause()
         audioManager.pauseBackgroundMusic()
+        // No engine work while the app is out of sight.
+        gameController.setBackgroundAnalysisAllowed(false)
         if (gameController.getMoveHistory().isNotEmpty()) {
             gameController.saveGame(this)
         }
@@ -700,8 +706,9 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Reviews the game on the board: replay it with the graph of how it went under the board,
-     * opening at the player's costliest move with the better one drawn. The analysis takes a few
-     * seconds, so the replay opens at once and the panel fills in when it is ready.
+     * opening at the player's costliest move with the better one drawn. The analysis takes a
+     * while, so the replay opens at once, the panel counts the positions searched and fills in
+     * when it is ready.
      */
     private fun startReview() {
         if (gameController.getMoveHistory().isEmpty()) {
@@ -713,26 +720,49 @@ class MainActivity : AppCompatActivity() {
         currentReview()?.let { openReviewAt(it); return }
         val moves = gameController.getMoveHistory().toList()
         reviewRunning = true
+        reviewProgress = null
         updateReplayBar()
-        gameController.analyzeGame(humanSide()) { analysis ->
-            runOnUiThread {
-                reviewRunning = false
-                if (analysis == null) {
-                    Snackbar.make(boardView, R.string.analysis_unavailable, Snackbar.LENGTH_LONG).show()
-                    updateReplayBar()
-                    return@runOnUiThread
+        gameController.analyzeGame(
+            humanSide(),
+            onProgress = { verifying, done, total ->
+                runOnUiThread {
+                    if (!reviewRunning) return@runOnUiThread
+                    reviewProgress = getString(if (verifying) R.string.review_verifying else R.string.review_progress, done, total)
+                    if (gameController.isInReplayMode()) reviewInfoText.text = reviewProgress
                 }
-                review = analysis
-                reviewedMoves = moves
-                reviewGraph.setData(
-                    analysis.evals.map { e -> e?.let { it.cpRed to it.mateRed } },
-                    reviewMarks(analysis, moves),
-                    analysis.mistake?.index,
-                    gameController.getReplayIndex()
-                )
-                if (gameController.isInReplayMode() && currentReview() != null) openReviewAt(analysis) else updateReplayBar()
+            },
+            onDone = { analysis ->
+                runOnUiThread {
+                    if (!reviewRunning) return@runOnUiThread
+                    reviewRunning = false
+                    reviewProgress = null
+                    if (analysis == null) {
+                        Snackbar.make(boardView, R.string.analysis_unavailable, Snackbar.LENGTH_LONG).show()
+                        updateReplayBar()
+                        return@runOnUiThread
+                    }
+                    review = analysis
+                    reviewedMoves = moves
+                    deepLooks.clear()
+                    deepLooksTried.clear()
+                    reviewGraph.setData(
+                        analysis.evals.map { e -> e?.let { it.cpRed to it.mateRed } },
+                        reviewMarks(analysis),
+                        analysis.mistake?.index,
+                        gameController.getReplayIndex()
+                    )
+                    if (gameController.isInReplayMode() && currentReview() != null) openReviewAt(analysis) else updateReplayBar()
+                }
             }
-        }
+        )
+    }
+
+    /** Leaving the replay ends a review still being worked out, so the game gets the engine back. */
+    private fun stopReview() {
+        if (reviewRunning) gameController.cancelAnalysis()
+        reviewRunning = false
+        reviewProgress = null
+        cancelDeepLook()
     }
 
     private fun openReviewAt(analysis: GameController.Analysis) {
@@ -750,25 +780,47 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * The moves to mark on the graph: the human player's mistakes and blunders, or both sides'
-     * when no one side is human. Keyed by the position each was played from, the one whose line
-     * under the board explains that move and whose arrow shows the better one.
+     * The moves to mark on the graph: those the deeper search confirmed as mistakes or blunders.
+     * Keyed by the position each was played from, the one whose line under the board explains
+     * that move and whose arrow shows the better one.
      */
-    private fun reviewMarks(
-        analysis: GameController.Analysis,
-        moves: List<com.yingwang.chinesechess.model.Move>
-    ): Map<Int, EvalGraphView.Mark> {
-        val player = humanSide()
-        val marks = mutableMapOf<Int, EvalGraphView.Mark>()
-        for ((i, cost) in analysis.costs.withIndex()) {
-            if (cost == null || (player != null && moves[i].piece.color != player)) continue
-            when (Review.verdict(cost)) {
-                Review.Verdict.BLUNDER -> marks[i] = EvalGraphView.Mark.BLUNDER
-                Review.Verdict.MISTAKE -> marks[i] = EvalGraphView.Mark.MISTAKE
-                else -> {}
+    private fun reviewMarks(analysis: GameController.Analysis): Map<Int, EvalGraphView.Mark> =
+        analysis.verdicts.mapValues { (_, verdict) ->
+            if (verdict == Review.Verdict.BLUNDER) EvalGraphView.Mark.BLUNDER else EvalGraphView.Mark.MISTAKE
+        }
+
+    // A longer look at the position the player stops on: its move replaces the shallow one.
+    private val deepLooks = mutableMapOf<Int, com.yingwang.chinesechess.model.Move>()
+    private val deepLooksTried = mutableSetOf<Int>()
+    private var deepLookJob: kotlinx.coroutines.Job? = null
+    private var deepLookIndex: Int? = null
+    private val deepLookHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val deepLookStart = Runnable {
+        val index = deepLookIndex ?: return@Runnable
+        if (!gameController.isInReplayMode() || gameController.getReplayIndex() != index) return@Runnable
+        deepLookJob = gameController.deepLook(index) { move ->
+            runOnUiThread {
+                deepLooksTried += index
+                if (move != null) deepLooks[index] = move
+                if (deepLookIndex == index) deepLookIndex = null
+                if (gameController.isInReplayMode() && gameController.getReplayIndex() == index) updateReviewPanel()
             }
         }
-        return marks
+    }
+
+    /** Starts a longer look at [index] once the player has stayed there a moment. */
+    private fun scheduleDeepLook(index: Int) {
+        if (deepLookIndex == index || index in deepLooksTried) return
+        cancelDeepLook()
+        deepLookIndex = index
+        deepLookHandler.postDelayed(deepLookStart, DEEP_LOOK_DELAY_MS)
+    }
+
+    private fun cancelDeepLook() {
+        deepLookHandler.removeCallbacks(deepLookStart)
+        deepLookJob?.cancel()
+        deepLookJob = null
+        deepLookIndex = null
     }
 
     /**
@@ -793,20 +845,23 @@ class MainActivity : AppCompatActivity() {
         }
         val index = gameController.getReplayIndex()
         val moreToCome = index < gameController.getReplayLength()
-        boardView.showSuggestion(if (replaying && moreToCome) analysis?.best?.getOrNull(index) else null)
+        val engineMove = if (index in deepLooks) deepLooks[index] else analysis?.best?.getOrNull(index)
+        boardView.showSuggestion(if (replaying && moreToCome) engineMove else null)
         if (!show) return
         if (analysis == null) {
-            reviewInfoText.setText(R.string.review_running)
+            reviewInfoText.text = reviewProgress ?: getString(R.string.review_running)
             reviewGraph.setData(emptyList(), emptyMap(), null, null)
             return
         }
         reviewGraph.setCurrent(index)
         reviewInfoText.text = reviewLine(analysis, index)
+        if (moreToCome) scheduleDeepLook(index) else cancelDeepLook()
     }
 
     /**
-     * The line for the position after [index] moves: the move played from it, how it is judged,
-     * the engine's move when that was different, and how the position went.
+     * The line for the position after [index] moves: the move played from it, named a mistake or
+     * blunder only when the deeper search confirmed it, the engine's move when that was
+     * different, and how the position went.
      */
     private fun reviewLine(analysis: GameController.Analysis, index: Int): String {
         val moves = gameController.getMoveHistory()
@@ -818,15 +873,13 @@ class MainActivity : AppCompatActivity() {
         for (i in 0 until index) before.makeMoveInPlace(moves[i])
         val move = moves[index]
         val side = getString(if (move.piece.color == PieceColor.RED) R.string.red_short else R.string.black_short)
-        val best = analysis.best.getOrNull(index)
-        val isBest = best != null && best.from == move.from && best.to == move.to
-        val tag = if (isBest) getString(R.string.review_tag_best) else analysis.costs.getOrNull(index)?.let { cost ->
-            when (Review.verdict(cost)) {
-                Review.Verdict.BLUNDER -> getString(R.string.review_tag_blunder)
-                Review.Verdict.MISTAKE -> getString(R.string.review_tag_mistake)
-                Review.Verdict.INACCURACY -> getString(R.string.review_tag_inaccuracy)
-                Review.Verdict.FINE -> null
-            }
+        val deep = index in deepLooks
+        val engineMove = if (deep) deepLooks[index] else analysis.best.getOrNull(index)
+        val agrees = engineMove != null && engineMove.from == move.from && engineMove.to == move.to
+        val tag = when (analysis.verdicts[index]) {
+            Review.Verdict.BLUNDER -> getString(R.string.review_tag_blunder)
+            Review.Verdict.MISTAKE -> getString(R.string.review_tag_mistake)
+            else -> null
         }
         val headline = getString(R.string.review_move, index / 2 + 1, side, notation(move, before)) +
             (tag?.let { " · $it" } ?: "")
@@ -835,8 +888,13 @@ class MainActivity : AppCompatActivity() {
             analysis.evals.getOrNull(index)?.let { evalSummary(it) } ?: "?",
             analysis.evals.getOrNull(index + 1)?.let { evalSummary(it) } ?: "?"
         )
-        val detail = if (best != null && !isBest) getString(R.string.review_better, notation(best, before)) + " · " + swing else swing
-        return headline + "\n" + detail
+        val advice = when {
+            engineMove == null -> null
+            agrees -> getString(if (deep) R.string.review_same_deep else R.string.review_same)
+            else -> getString(if (deep) R.string.review_better_deep else R.string.review_better, notation(engineMove, before))
+        }
+        val thinking = if (!deep && deepLookIndex == index) " · " + getString(R.string.review_deep_running) else ""
+        return headline + "\n" + listOfNotNull(advice, swing).joinToString(" · ") + thinking
     }
 
     // ── Dialogs ──
@@ -973,6 +1031,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun exitReplay() {
+        stopReview()
         boardView.showSuggestion(null)
         gameController.exitReplayMode()
         updateGameModeDisplay()

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.2] - 2026-10-04
+
+### Added
+- The game is analysed while it is played: while the player thinks, the engine looks at the positions so far at depth 12, newest first, so a review afterwards is mostly ready and deeper. The AI's turn, a hint, a replay and leaving the app stop the search in hand at once
+- In a review, the position the player stops on gets a two-second look, as a hint does, and its move replaces the shallow one (marked as the longer look)
+
+### Changed
+- Mistakes and blunders are named only when a depth-12 search before and after the move agrees; other moves get the engine's move, not a verdict. 最佳 and 缓着 are gone
+- The review shows how many positions it has searched, and checked
+- Leaving a review stops its analysis, and the analysis takes the engine one position at a time, so a game picked up again never waits for a whole review
+
 ## [2.4.1] - 2026-10-03
 
 ### Changed
