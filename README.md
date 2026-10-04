@@ -58,8 +58,8 @@ Pikafish 没有限制棋力的选项，所以新手和入门两档让它给出�
 
 ### User Interface / 用户界面
 
-- Classical wood-grain board / 经典木纹棋盘
-- 3D convex pieces with radial gradient and drop shadow / 3D 凸面棋子，径向渐变和投影
+- Pale jade board on an ink-wash landscape / 青玉棋盘配水墨山水背景
+- Pieces in a Kai typeface (LXGW WenKai subset, SIL OFL), cinnabar red and ink black / 棋子用楷体（霞鹜文楷子集，SIL OFL），朱砂红与墨色
 - Inner decorative ring (traditional xiangqi style) / 内圈装饰环（传统象棋风格）
 - Warm gold selection glow with move indicators / 暖金色选中光效和走法提示
 - Smooth 200ms piece movement animation / 流畅的 200ms 走子动画
