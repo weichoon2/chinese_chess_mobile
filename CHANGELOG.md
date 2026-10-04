@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.6] - 2026-10-04
+
+### Fixed
+- The AI could sit on 思考中 without ever moving: a move made while the engine was still starting cancelled the start half way, which left a 230 MB engine process running and started another, and on a loaded phone the next search waited behind them. The engine start now runs to the end whoever asked for it
+- After a take-back the last-move marks stayed on the move that was taken back
+
 ## [2.4.5] - 2026-10-04
 
 ### Added

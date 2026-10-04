@@ -1,0 +1,10 @@
+[
+ {
+  "language": "en-US",
+  "text": "A dark theme, Night Jade: the ink landscape at night, a dark jade board with gold lines, and the same cinnabar and ink pieces. Choose light, dark or follow the system under More > Appearance. Fixed: the AI could keep thinking without moving right after launch, and the last-move mark after a take-back."
+ },
+ {
+  "language": "zh-CN",
+  "text": "新增深色主题「墨玉夜山」：水墨山水染成夜色，深青玉棋盘配金色棋线，棋子依旧朱砂红、墨色。在「更多」→「界面主题」里可选浅色、深色或跟随系统，默认跟随系统；切换时棋局和复盘都不会中断。修复：刚打开就走棋时电脑偶尔一直显示思考中不落子；悔棋后「上一手」标记位置不对。"
+ }
+]

@@ -315,6 +315,7 @@ class MainActivity : AppCompatActivity() {
                 .setPositiveButton(R.string.ok) { _, _ ->
                     if (gameController.undoLastMove()) {
                         boardView.clearSelection()
+                        boardView.highlightMove(gameController.getMoveHistory().lastOrNull())
                         toast(R.string.undo_done)
                     }
                 }

@@ -230,16 +230,25 @@ class GameController(
         }
     }
 
+    /**
+     * The engine, started on first use. Starting runs to the end even if the caller is cancelled
+     * meanwhile (the background analysis often is, when the player resumes a game or moves while
+     * the engine is still loading): giving up half way left a running engine process behind,
+     * about 230 MB each, and the next caller started another.
+     */
     private suspend fun ensurePikafish(): PikafishEngine? {
-        if (pikafishEngine != null) return pikafishEngine
-        return try {
+        pikafishEngine?.let { return it }
+        return withContext(NonCancellable) {
             val engine = PikafishEngine(context)
-            engine.start()
-            pikafishEngine = engine
-            engine
-        } catch (e: Exception) {
-            Log.e("GameController", "Failed to start Pikafish", e)
-            null
+            try {
+                engine.start()
+                pikafishEngine = engine
+                engine
+            } catch (e: Exception) {
+                Log.e("GameController", "Failed to start Pikafish", e)
+                engine.close()
+                null
+            }
         }
     }
 
