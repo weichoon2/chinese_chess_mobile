@@ -64,6 +64,7 @@
     <string name="review_tag_blunder">败着</string>
     <string name="review_better">引擎推荐%1$s（见箭头）</string>
     <string name="review_swing">形势 %1$s → %2$s</string>
+    <string name="review_now">当前局面 · %1$s</string>
     <string name="review_end">终局 · %1$s</string>
     <string name="graph_red_tick">红+%1$d</string>
     <string name="graph_black_tick">黑+%1$d</string>
@@ -189,4 +190,7 @@
     <string-array name="board_bottom_files">
         <item>九</item><item>八</item><item>七</item><item>六</item><item>五</item><item>四</item><item>三</item><item>二</item><item>一</item>
     </string-array>
+    <string name="review_prev_mistake">上一处失误</string>
+    <string name="review_next_mistake">下一处失误</string>
+    <string name="review_no_mistake">这个方向没有更多失误</string>
 </resources>

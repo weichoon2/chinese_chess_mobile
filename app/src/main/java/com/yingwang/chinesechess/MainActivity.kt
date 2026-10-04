@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
@@ -228,6 +227,8 @@ class MainActivity : AppCompatActivity() {
                 updateReplayBar()
             }
         }
+        findViewById<View>(R.id.reviewPrevMistake).setOnClickListener { jumpToMistake(-1) }
+        findViewById<View>(R.id.reviewNextMistake).setOnClickListener { jumpToMistake(1) }
         boardView.onBlockedTouch = { toast(R.string.replay_blocked) }
         findViewById<View>(R.id.replayStartButton).setOnClickListener { gameController.replayToStart(); updateReplayBar() }
         findViewById<View>(R.id.replayPrevButton).setOnClickListener {
@@ -456,60 +457,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * The pieces a side has taken, most valuable first, in one row or, when they would not fit
-     * at a readable size, two: all sixteen fit on a phone. Black's card is right-aligned, so its
-     * rows are too.
+     * The pieces a side has taken, as one line of text grouped by kind, most valuable first
+     * (車×2  炮  卒×3): it stays readable however many there are.
      */
     private fun updateCapturedRow(container: LinearLayout, pieces: List<Piece>) {
         container.removeAllViews()
         if (pieces.isEmpty()) return
-        val available = container.width
-        if (available == 0) {
-            // Not laid out yet; try again once it is.
-            container.post { if (container.width > 0) updateCapturedRow(container, pieces) }
-            return
-        }
-        val sorted = pieces.sortedByDescending { it.type.baseValue }
-        val dp = resources.displayMetrics.density
-        val gap = (2 * dp).toInt()
-        val full = (22 * dp).toInt()
-        val oneRow = available / (full + gap)
-        val perRow = if (sorted.size <= oneRow) sorted.size else (sorted.size + 1) / 2
-        val size = minOf(full, available / perRow - gap).coerceAtLeast((12 * dp).toInt())
-        val alignEnd = container.id == R.id.blackCapturedPieces
-
-        for (chunk in sorted.chunked(perRow)) {
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = if (alignEnd) Gravity.END else Gravity.START
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, size + gap)
+        val summary = pieces.groupBy { it.type }.entries.sortedByDescending { it.key.baseValue }
+            .joinToString("  ") { (type, group) ->
+                type.getDisplayName(group.first().color) + if (group.size > 1) "×${group.size}" else ""
             }
-            for (piece in chunk) {
-                val tv = TextView(this).apply {
-                    text = piece.type.getDisplayName(piece.color)
-                    textSize = 11f * size / full
-                    typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
-                    setTextColor(
-                        ContextCompat.getColor(
-                            this@MainActivity,
-                            if (piece.color == PieceColor.RED) R.color.chess_piece_red_ink else R.color.chess_piece_black_ink
-                        )
-                    )
-                    gravity = Gravity.CENTER
-                    includeFontPadding = false
-                    layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                        if (alignEnd) marginStart = gap else marginEnd = gap
-                    }
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.OVAL
-                        setColor(ContextCompat.getColor(this@MainActivity, R.color.chess_captured_bg))
-                        setStroke((1 * dp).toInt(), ContextCompat.getColor(this@MainActivity, R.color.chess_captured_stroke))
-                    }
-                }
-                row.addView(tv)
-            }
-            container.addView(row)
-        }
+        container.addView(TextView(this).apply {
+            text = summary
+            textSize = 13f
+            typeface = Typeface.SERIF
+            // In the colour of the side the pieces belonged to, as on the board.
+            setTextColor(
+                ContextCompat.getColor(
+                    this@MainActivity,
+                    if (pieces.first().color == PieceColor.RED) R.color.chess_red_side else R.color.chess_black_side
+                )
+            )
+            gravity = if (container.id == R.id.blackCapturedPieces) Gravity.END else Gravity.START
+            maxLines = 2
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        })
     }
 
     private fun startThinkingAnimation() {
@@ -765,6 +737,19 @@ class MainActivity : AppCompatActivity() {
         cancelDeepLook()
     }
 
+    /** Moves the replay to the next marked move after the one on the board, or the one before. */
+    private fun jumpToMistake(direction: Int) {
+        val analysis = currentReview() ?: return
+        val index = gameController.getReplayIndex()
+        val marks = reviewMarks(analysis).keys
+        val target = if (direction > 0) marks.filter { it > index }.minOrNull()
+            else marks.filter { it < index }.maxOrNull()
+        if (target == null) toast(R.string.review_no_mistake) else {
+            gameController.replayGoTo(target)
+            updateReplayBar()
+        }
+    }
+
     private fun openReviewAt(analysis: GameController.Analysis) {
         analysis.mistake?.let { gameController.replayGoTo(it.index) }
         updateReplayBar()
@@ -866,7 +851,11 @@ class MainActivity : AppCompatActivity() {
     private fun reviewLine(analysis: GameController.Analysis, index: Int): String {
         val moves = gameController.getMoveHistory()
         if (index >= moves.size) {
-            val end = getString(R.string.review_end, analysis.evals.getOrNull(index)?.let { evalSummary(it) } ?: "")
+            // A game reviewed before it is over ends on the position still being played.
+            val end = getString(
+                if (gameController.isGameOver()) R.string.review_end else R.string.review_now,
+                analysis.evals.getOrNull(index)?.let { evalSummary(it) } ?: ""
+            )
             return if (analysis.mistake == null && humanSide() != null) end + "\n" + getString(R.string.review_none) else end
         }
         val before = gameController.getInitialBoard().copy()

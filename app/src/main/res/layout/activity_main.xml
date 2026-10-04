@@ -419,6 +419,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/belowBoard">
 
+        <!-- Step straight between the moves marked on the graph. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/reviewPrevMistake"
+                style="@style/Widget.Chess.ReplayButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/review_prev_mistake" />
+
+            <TextView
+                android:id="@+id/reviewNextMistake"
+                style="@style/Widget.Chess.ReplayButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/review_next_mistake" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/reviewInfoText"
             android:layout_width="match_parent"

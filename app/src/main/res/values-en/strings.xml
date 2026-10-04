@@ -66,6 +66,7 @@
     <string name="review_tag_blunder">Blunder</string>
     <string name="review_better">Engine prefers %1$s (arrow)</string>
     <string name="review_swing">%1$s → %2$s</string>
+    <string name="review_now">Position now · %1$s</string>
     <string name="review_end">Final position · %1$s</string>
     <string name="graph_red_tick">R+%1$d</string>
     <string name="graph_black_tick">B+%1$d</string>
@@ -189,4 +190,7 @@
     <string-array name="board_bottom_files">
         <item>9</item><item>8</item><item>7</item><item>6</item><item>5</item><item>4</item><item>3</item><item>2</item><item>1</item>
     </string-array>
+    <string name="review_prev_mistake">Previous mistake</string>
+    <string name="review_next_mistake">Next mistake</string>
+    <string name="review_no_mistake">No more mistakes in this direction</string>
 </resources>
