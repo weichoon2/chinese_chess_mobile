@@ -165,6 +165,7 @@ class MainActivity : AppCompatActivity() {
                 .setPositiveButton(R.string.resume_continue) { _, _ ->
                     gameController.loadGame(this)
                     updateGameModeDisplay()
+                    boardView.highlightMove(gameController.getMoveHistory().lastOrNull())
                 }
                 .setNegativeButton(R.string.new_game) { _, _ ->
                     gameController.deleteSavedGame(this)
@@ -1021,6 +1022,8 @@ class MainActivity : AppCompatActivity() {
         stopReview()
         boardView.showSuggestion(null)
         gameController.exitReplayMode()
+        // Back on the live game, mark its last move again, not the one the replay stopped on.
+        boardView.highlightMove(gameController.getMoveHistory().lastOrNull())
         updateGameModeDisplay()
         updateReplayBar()
     }
